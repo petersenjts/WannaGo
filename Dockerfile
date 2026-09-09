@@ -2,10 +2,15 @@
 
 FROM node:22-slim AS base
 WORKDIR /app
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # ---- deps -------------------------------------------------------------
 FROM base AS deps
 COPY package.json package-lock.json ./
+# npm ci runs Prisma's postinstall (`prisma generate`), which needs the
+# schema and config present, not just package.json.
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npm ci
 
 # ---- build --------------------------------------------------------------
