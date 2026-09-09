@@ -22,22 +22,22 @@ export default function DiningRequestPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-16 [--accent:var(--color-dine)] sm:px-10">
+    <div className="mx-auto max-w-2xl px-6 py-20 [--accent:var(--color-dine)] sm:px-10 sm:py-24">
       <Link href="/" className="text-sm text-muted hover:text-ink-soft">
         ← Back
       </Link>
-      <p className="mt-6 text-sm font-medium uppercase tracking-wide text-dine-strong">
+      <p className="eyebrow mt-8 text-dine-strong">
         Wanna Eats
       </p>
-      <h1 className="mt-2 font-serif text-3xl text-ink sm:text-4xl">
+      <h1 className="mt-3 font-serif text-h1 text-ink">
         Tell us about the table you want
       </h1>
-      <p className="mt-3 text-ink-soft">
+      <p className="mt-4 text-lg text-ink-soft">
         Fill in as much as you can — we&apos;ll follow up within a day or two with a
         recommendation.
       </p>
 
-      <form action={formAction} className="mt-10 space-y-8">
+      <form action={formAction} className="mt-12 space-y-10">
         {state.error && (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {state.error}

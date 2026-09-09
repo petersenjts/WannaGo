@@ -26,12 +26,12 @@ export default async function CustomersPage({
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-ink">Customers</h1>
-      <p className="mt-1 text-ink-soft">
+      <h1 className="font-serif text-h1 text-ink">Customers</h1>
+      <p className="mt-2 text-ink-soft">
         Matched by email or phone — this is what ties Wannago and Wanna Eats requests together.
       </p>
 
-      <form className="mt-6" method="get">
+      <form className="mt-8" method="get">
         <input
           type="text"
           name="q"
@@ -41,15 +41,15 @@ export default async function CustomersPage({
         />
       </form>
 
-      <div className="mt-8 overflow-x-auto rounded-xl border border-line bg-card">
+      <div className="mt-10 overflow-x-auto rounded-2xl bg-card">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
+          <thead className="eyebrow">
             <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Contact</th>
-              <th className="px-4 py-3 font-medium">Requests</th>
-              <th className="px-4 py-3 font-medium">Verticals used</th>
-              <th className="px-4 py-3 font-medium">Since</th>
+              <th className="px-5 py-4 font-medium">Name</th>
+              <th className="px-5 py-4 font-medium">Contact</th>
+              <th className="px-5 py-4 font-medium">Requests</th>
+              <th className="px-5 py-4 font-medium">Verticals used</th>
+              <th className="px-5 py-4 font-medium">Since</th>
             </tr>
           </thead>
           <tbody>
@@ -57,18 +57,18 @@ export default async function CustomersPage({
               const verticals = new Set(c.requests.map((r) => r.vertical));
               const usesBoth = verticals.size > 1;
               return (
-                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-paper-alt/50">
-                  <td className="px-4 py-3 align-top">
+                <tr key={c.id} className="even:bg-paper-alt/40 hover:bg-paper-alt">
+                  <td className="px-5 py-4 align-top">
                     <Link href={`/admin/customers/${c.id}`} className="font-medium text-ink hover:underline">
                       {c.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 align-top text-ink-soft">
+                  <td className="px-5 py-4 align-top text-ink-soft">
                     {c.email && <div>{c.email}</div>}
                     {c.phone && <div>{c.phone}</div>}
                   </td>
-                  <td className="px-4 py-3 align-top text-ink-soft">{c.requests.length}</td>
-                  <td className="px-4 py-3 align-top">
+                  <td className="px-5 py-4 align-top text-ink-soft">{c.requests.length}</td>
+                  <td className="px-5 py-4 align-top">
                     <div className="flex flex-wrap gap-1.5">
                       {verticals.has("STAY") && (
                         <span className="rounded-full bg-stay-soft px-2 py-0.5 text-xs font-medium text-stay-strong">
@@ -81,19 +81,19 @@ export default async function CustomersPage({
                         </span>
                       )}
                       {!usesBoth && (
-                        <span className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">
+                        <span className="rounded-full bg-paper-alt px-2 py-0.5 text-xs text-muted">
                           Hasn&apos;t tried the other side
                         </span>
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3 align-top text-ink-soft">{formatDate(c.createdAt)}</td>
+                  <td className="px-5 py-4 align-top text-ink-soft">{formatDate(c.createdAt)}</td>
                 </tr>
               );
             })}
             {customers.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted">
+                <td colSpan={5} className="px-5 py-12 text-center text-muted">
                   No customers found.
                 </td>
               </tr>

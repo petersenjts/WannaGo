@@ -18,11 +18,11 @@ export function VerticalBadge({ vertical }: { vertical: Vertical }) {
 
 const STATUS_STYLES: Record<RequestStatus, string> = {
   NEW: "bg-paper-alt text-ink-soft",
-  IN_PROGRESS: "bg-amber-100 text-amber-800",
-  SENT_TO_CUSTOMER: "bg-sky-100 text-sky-800",
-  SELECTED: "bg-violet-100 text-violet-800",
-  BOOKED: "bg-emerald-100 text-emerald-800",
-  CLOSED_LOST: "bg-stone-200 text-stone-600",
+  IN_PROGRESS: "bg-[#F3E6C6] text-[#7A5A1E]",
+  SENT_TO_CUSTOMER: "bg-[#E4DCC9] text-ink-soft",
+  SELECTED: "bg-[#EAD9C3] text-stay-strong",
+  BOOKED: "bg-[#DCE3CE] text-dine-strong",
+  CLOSED_LOST: "bg-paper-alt text-muted",
 };
 
 export function StatusBadge({ status }: { status: RequestStatus }) {
@@ -39,13 +39,13 @@ export function TrialBadge({ trialStartDate }: { trialStartDate: Date }) {
   const inTrial = isInTrial(trialStartDate);
   return inTrial ? (
     <span
-      className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800"
+      className="inline-flex items-center rounded-full bg-[#F3E6C6] px-2.5 py-0.5 text-xs font-medium text-[#7A5A1E]"
       title={`Trial ends ${formatDate(trialEndDate(trialStartDate))}`}
     >
       In trial until {formatDate(trialEndDate(trialStartDate))}
     </span>
   ) : (
-    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">
+    <span className="inline-flex items-center rounded-full bg-[#DCE3CE] px-2.5 py-0.5 text-xs font-medium text-dine-strong">
       Standard rate
     </span>
   );

@@ -1,28 +1,35 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Design tokens — the single source of truth for color and type
+   across the public site, customer portal, and admin dashboard.
+   Fora Travel–inspired: warm neutrals, muted accents, editorial
+   serif headings. Color is wayfinding (badges, tags, focus), not
+   decoration — primary UI chrome stays neutral ink.
+   ============================================================ */
 :root {
   /* Neutral base, shared by both verticals */
-  --color-paper: #faf6f0;
-  --color-paper-alt: #f2ebdf;
-  --color-card: #fffdfa;
-  --color-ink: #2a231c;
-  --color-ink-soft: #5c5346;
-  --color-muted: #8c8172;
-  --color-line: #e4d9c6;
+  --color-paper: #faf4ea;
+  --color-paper-alt: #f2e9da;
+  --color-card: #fffdf9;
+  --color-ink: #33291f;
+  --color-ink-soft: #5c4f41;
+  --color-muted: #8a7a68;
+  --color-line: #e6dac5;
 
-  /* Wannago (stays) — terracotta */
-  --color-stay: #b1502f;
-  --color-stay-strong: #8a3a1f;
-  --color-stay-soft: #f3ddd0;
-  --color-stay-soft-line: #e6c1ab;
+  /* Wannago (stays) — muted clay/terracotta */
+  --color-stay: #a6603f;
+  --color-stay-strong: #7c4429;
+  --color-stay-soft: #f0dfd1;
+  --color-stay-soft-line: #e0c4ac;
 
-  /* Wanna Eats (dining) — deep olive */
-  --color-dine: #566b3a;
-  --color-dine-strong: #3d4d28;
-  --color-dine-soft: #dfe6cf;
-  --color-dine-soft-line: #c1cfa5;
+  /* Wanna Eats (dining) — muted sage-olive */
+  --color-dine: #6b7355;
+  --color-dine-strong: #4e5540;
+  --color-dine-soft: #e3e5d6;
+  --color-dine-soft-line: #cbcfb2;
 
-  --color-danger: #a3402f;
+  --color-danger: #9a4130;
 }
 
 @theme inline {
@@ -48,6 +55,18 @@
 
   --font-serif: var(--font-fraunces);
   --font-sans: var(--font-inter);
+
+  /* Type scale — use these instead of ad hoc text-3xl/4xl choices */
+  --text-display: 3rem;
+  --text-display--line-height: 1.05;
+  --text-h1: 2.25rem;
+  --text-h1--line-height: 1.15;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.25;
+  --text-h3: 1.125rem;
+  --text-h3--line-height: 1.3;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.4;
 }
 
 body {
@@ -59,34 +78,47 @@ body {
   background: var(--color-stay-soft);
 }
 
-/* Shared form primitives. Vertical-specific pages set --accent on a wrapper
+/* Shared primitives. Vertical-specific pages set --accent on a wrapper
    (e.g. className="[--accent:var(--color-stay)]") so one set of styles works
    for both Wannago and Wanna Eats forms. */
 @layer components {
+  .eyebrow {
+    @apply text-eyebrow font-medium uppercase tracking-wider text-muted;
+  }
+
   .field-label {
     @apply mb-1.5 block text-sm font-medium text-ink-soft;
   }
   .field-input {
     @apply w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-ink outline-none transition-colors placeholder:text-muted;
-    accent-color: var(--accent, var(--color-stay));
+    accent-color: var(--accent, var(--color-ink));
   }
   .field-input:focus {
-    border-color: var(--accent, var(--color-stay));
-    box-shadow: 0 0 0 1px var(--accent, var(--color-stay));
+    border-color: var(--accent, var(--color-ink));
+    box-shadow: 0 0 0 1px var(--accent, var(--color-ink));
   }
   .field-hint {
     @apply mt-1 text-xs text-muted;
   }
+
   .btn-primary {
-    background: var(--accent, var(--color-stay));
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+    background: var(--accent, var(--color-ink));
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-medium uppercase tracking-wide text-paper transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
   }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-paper-alt px-6 py-3 text-sm font-medium uppercase tracking-wide text-ink transition-colors hover:bg-line/60 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .card {
+    @apply rounded-2xl bg-card p-6 sm:p-8;
+  }
+
   .tag-chip {
     @apply cursor-pointer select-none rounded-full border border-line bg-card px-3.5 py-1.5 text-sm text-ink-soft transition-colors;
   }
   .tag-chip:has(input:checked) {
-    border-color: var(--accent, var(--color-stay));
-    background: color-mix(in srgb, var(--accent, var(--color-stay)) 12%, var(--color-card));
+    border-color: var(--accent, var(--color-ink));
+    background: color-mix(in srgb, var(--accent, var(--color-ink)) 12%, var(--color-card));
     color: var(--color-ink);
   }
 }

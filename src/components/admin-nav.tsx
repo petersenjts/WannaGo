@@ -14,9 +14,9 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-line bg-card">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
-        <div className="flex items-center gap-8">
+    <header className="bg-card">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 sm:px-10">
+        <div className="flex items-center gap-10">
           <Link href="/admin/requests" className="font-serif text-lg text-ink">
             Wannago Concierge
           </Link>
@@ -27,7 +27,7 @@ export function AdminNav() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     active ? "bg-paper-alt text-ink" : "text-ink-soft hover:text-ink"
                   }`}
                 >
@@ -38,7 +38,7 @@ export function AdminNav() {
           </nav>
         </div>
         <form action={logout}>
-          <button type="submit" className="text-sm text-muted hover:text-ink-soft">
+          <button type="submit" className="eyebrow hover:text-ink-soft">
             Log out
           </button>
         </form>

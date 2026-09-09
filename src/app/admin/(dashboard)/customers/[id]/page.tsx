@@ -32,13 +32,13 @@ export default async function CustomerDetailPage({
         ← All customers
       </Link>
 
-      <h1 className="mt-4 font-serif text-3xl text-ink">{customer.name}</h1>
-      <p className="mt-1 text-ink-soft">
+      <h1 className="mt-5 font-serif text-h1 text-ink">{customer.name}</h1>
+      <p className="mt-2 text-ink-soft">
         {customer.email ?? "no email"} · {customer.phone ?? "no phone"} · customer since{" "}
         {formatDate(customer.createdAt)}
       </p>
 
-      <div className="mt-4 rounded-lg border border-line bg-paper-alt px-4 py-3 text-sm">
+      <div className="mt-6 rounded-xl bg-paper-alt px-5 py-4 text-sm">
         {usesBoth ? (
           <p className="text-ink-soft">
             Uses both <span className="font-medium text-stay-strong">Wannago</span> and{" "}
@@ -58,30 +58,30 @@ export default async function CustomerDetailPage({
         )}
       </div>
 
-      <h2 className="mt-8 font-serif text-xl text-ink">All requests</h2>
-      <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-card">
+      <h2 className="mt-10 font-serif text-h2 text-ink">All requests</h2>
+      <div className="mt-5 overflow-x-auto rounded-2xl bg-card">
         <table className="w-full min-w-[600px] text-left text-sm">
-          <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
+          <thead className="eyebrow">
             <tr>
-              <th className="px-4 py-3 font-medium">Received</th>
-              <th className="px-4 py-3 font-medium">Vertical</th>
-              <th className="px-4 py-3 font-medium">City</th>
-              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-5 py-4 font-medium">Received</th>
+              <th className="px-5 py-4 font-medium">Vertical</th>
+              <th className="px-5 py-4 font-medium">City</th>
+              <th className="px-5 py-4 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
             {customer.requests.map((r) => (
-              <tr key={r.id} className="border-b border-line last:border-0 hover:bg-paper-alt/50">
-                <td className="px-4 py-3 align-top">
+              <tr key={r.id} className="even:bg-paper-alt/40 hover:bg-paper-alt">
+                <td className="px-5 py-4 align-top">
                   <Link href={`/admin/requests/${r.id}`} className="text-ink-soft hover:text-ink">
                     {formatDateTime(r.createdAt)}
                   </Link>
                 </td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-5 py-4 align-top">
                   <VerticalBadge vertical={r.vertical} />
                 </td>
-                <td className="px-4 py-3 align-top text-ink-soft">{r.city}</td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-5 py-4 align-top text-ink-soft">{r.city}</td>
+                <td className="px-5 py-4 align-top">
                   <StatusBadge status={r.status} />
                 </td>
               </tr>

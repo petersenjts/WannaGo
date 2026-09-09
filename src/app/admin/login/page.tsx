@@ -11,9 +11,9 @@ export default function AdminLoginPage() {
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <p className="font-serif text-lg italic text-muted">Concierge</p>
-      <h1 className="mt-2 font-serif text-3xl text-ink">Sign in</h1>
+      <h1 className="mt-3 font-serif text-h1 text-ink">Sign in</h1>
 
-      <form action={formAction} className="mt-8 space-y-5">
+      <form action={formAction} className="mt-10 space-y-5">
         {state.error && (
           <p className="rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             {state.error}

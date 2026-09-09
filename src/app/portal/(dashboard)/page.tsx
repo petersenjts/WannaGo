@@ -17,8 +17,8 @@ export default async function PortalHomePage() {
   if (!customer) {
     return (
       <div>
-        <h1 className="font-serif text-3xl text-ink">Your requests</h1>
-        <p className="mt-3 text-ink-soft">We couldn&apos;t find any requests for this account.</p>
+        <h1 className="font-serif text-h1 text-ink">Your requests</h1>
+        <p className="mt-4 text-ink-soft">We couldn&apos;t find any requests for this account.</p>
       </div>
     );
   }
@@ -29,11 +29,11 @@ export default async function PortalHomePage() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-ink">Hi {customer.name.split(" ")[0]}</h1>
-      <p className="mt-1 text-ink-soft">Here&apos;s where things stand with your requests.</p>
+      <h1 className="font-serif text-h1 text-ink">Hi {customer.name.split(" ")[0]}</h1>
+      <p className="mt-2 text-ink-soft">Here&apos;s where things stand with your requests.</p>
 
       {!usesBoth && singleVertical && (
-        <div className="mt-5 rounded-lg border border-line bg-paper-alt px-4 py-3 text-sm text-ink-soft">
+        <div className="mt-6 rounded-xl bg-paper-alt px-5 py-4 text-sm text-ink-soft">
           {singleVertical === "STAY" ? (
             <>
               Looking for somewhere to eat too?{" "}
@@ -54,23 +54,23 @@ export default async function PortalHomePage() {
         </div>
       )}
 
-      <ul className="mt-8 space-y-3">
+      <ul className="mt-10 space-y-4">
         {customer.requests.map((r) => (
           <li key={r.id}>
             <Link
               href={`/portal/requests/${r.id}`}
               className={
                 r.vertical === "STAY"
-                  ? "block rounded-xl border border-line bg-card p-5 transition-colors hover:border-stay [--accent:var(--color-stay)]"
-                  : "block rounded-xl border border-line bg-card p-5 transition-colors hover:border-dine [--accent:var(--color-dine)]"
+                  ? "card block transition-shadow hover:shadow-[0_1px_24px_-4px_rgba(122,68,41,0.2)] [--accent:var(--color-stay)]"
+                  : "card block transition-shadow hover:shadow-[0_1px_24px_-4px_rgba(78,85,64,0.2)] [--accent:var(--color-dine)]"
               }
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium uppercase tracking-wide text-muted">
+                  <p className="eyebrow">
                     {r.vertical === "STAY" ? "Wannago" : "Wanna Eats"} · {r.city}
                   </p>
-                  <p className="mt-1 font-serif text-lg text-ink">{customerStatusLabel(r.status)}</p>
+                  <p className="mt-2 font-serif text-h3 text-ink">{customerStatusLabel(r.status)}</p>
                 </div>
                 <p className="text-sm text-muted">{formatDate(r.createdAt)}</p>
               </div>

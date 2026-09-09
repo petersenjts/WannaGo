@@ -57,18 +57,18 @@ export default async function RequestDetailPage({
         ← All requests
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <VerticalBadge vertical={request.vertical} />
             <StatusBadge status={request.status} />
           </div>
-          <h1 className="mt-3 font-serif text-3xl text-ink">
+          <h1 className="mt-3 font-serif text-h1 text-ink">
             <Link href={`/admin/customers/${request.customerId}`} className="hover:underline">
               {request.customer.name}
             </Link>
           </h1>
-          <p className="mt-1 text-ink-soft">
+          <p className="mt-2 text-ink-soft">
             {request.city} · received {formatDateTime(request.createdAt)}
           </p>
           <p className="mt-1 text-sm text-muted">
@@ -82,7 +82,7 @@ export default async function RequestDetailPage({
       </div>
 
       {otherRequests.length > 0 && (
-        <p className="mt-4 rounded-lg border border-line bg-paper-alt px-4 py-2.5 text-sm text-ink-soft">
+        <p className="mt-5 rounded-xl bg-paper-alt px-5 py-3.5 text-sm text-ink-soft">
           This customer has {otherRequests.length} other request{otherRequests.length === 1 ? "" : "s"}:{" "}
           {otherRequests.map((r, i) => (
             <span key={r.id}>
@@ -96,23 +96,23 @@ export default async function RequestDetailPage({
       )}
 
       {request.selectedOption && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm">
-          <p className="text-violet-900">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[#EAD9C3] px-5 py-3.5 text-sm">
+          <p className="text-stay-strong">
             Customer selected <span className="font-medium">{request.selectedOption.name}</span>
             {request.selectedAt && ` on ${formatDate(request.selectedAt)}`} — go finalize this booking.
           </p>
           <form action={clearSelection.bind(null, request.id)}>
-            <button type="submit" className="text-violet-700 underline hover:text-violet-900">
+            <button type="submit" className="text-stay-strong underline hover:opacity-75">
               Clear selection
             </button>
           </form>
         </div>
       )}
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">The request</h2>
+      <section className="card mt-10">
+        <h2 className="font-serif text-h2 text-ink">The request</h2>
         {request.vertical === "STAY" && request.stayDetails && (
-          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+          <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
             <Detail label="Check-in" value={formatDate(request.stayDetails.checkIn)} />
             <Detail label="Check-out" value={formatDate(request.stayDetails.checkOut)} />
             <Detail label="Guests" value={String(request.stayDetails.guests)} />
@@ -129,7 +129,7 @@ export default async function RequestDetailPage({
           </dl>
         )}
         {request.vertical === "DINE" && request.diningDetails && (
-          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+          <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
             <Detail label="Date" value={formatDate(request.diningDetails.date)} />
             <Detail label="Time" value={request.diningDetails.time} />
             <Detail label="Party size" value={String(request.diningDetails.partySize)} />
@@ -140,20 +140,20 @@ export default async function RequestDetailPage({
           </dl>
         )}
         {request.consumerNotes && (
-          <div className="mt-5 border-t border-line pt-4">
+          <div className="mt-6 border-t border-line pt-5">
             <p className="field-label">Notes from the customer</p>
             <p className="whitespace-pre-wrap text-ink-soft">{request.consumerNotes}</p>
           </div>
         )}
       </section>
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">Partners contacted</h2>
+      <section className="card mt-8">
+        <h2 className="font-serif text-h2 text-ink">Partners contacted</h2>
         <p className="mt-1 text-sm text-muted">Who you reached out to, and what they quoted.</p>
 
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-5 space-y-3">
           {request.partnerContacts.map((c) => (
-            <li key={c.id} className="flex items-start justify-between gap-4 rounded-lg border border-line px-4 py-3">
+            <li key={c.id} className="flex items-start justify-between gap-4 rounded-xl bg-paper-alt/60 px-5 py-4">
               <div>
                 <p className="font-medium text-ink">{c.partner?.name ?? c.partnerNameIfUnlisted}</p>
                 <p className="text-sm text-ink-soft">
@@ -173,7 +173,7 @@ export default async function RequestDetailPage({
           )}
         </ul>
 
-        <form action={addPartnerContact.bind(null, request.id)} className="mt-5 grid grid-cols-1 gap-3 border-t border-line pt-5 sm:grid-cols-2">
+        <form action={addPartnerContact.bind(null, request.id)} className="mt-6 grid grid-cols-1 gap-3 border-t border-line pt-6 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="pc-partnerId">Existing partner</label>
             <select id="pc-partnerId" name="partnerId" className="field-input">
@@ -201,26 +201,33 @@ export default async function RequestDetailPage({
         </form>
       </section>
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">Shortlist sent to the customer</h2>
+      <section className="card mt-8">
+        <h2 className="font-serif text-h2 text-ink">Shortlist sent to the customer</h2>
         <p className="mt-1 text-sm text-muted">
           {request.vertical === "STAY" ? "Up to ~5 options." : "Usually just the one recommendation."}
         </p>
 
-        <ul className="mt-4 space-y-3">
+        <ul className="mt-5 space-y-3">
           {request.shortlistOptions.map((o) => (
-            <li key={o.id} className="flex items-start justify-between gap-4 rounded-lg border border-line px-4 py-3">
-              <div>
-                <p className="font-medium text-ink">{o.name}</p>
+            <li key={o.id} className="flex items-start gap-4 rounded-xl bg-paper-alt/60 p-4">
+              {o.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={o.photoUrl} alt={o.name} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <div className="h-16 w-16 shrink-0 rounded-lg bg-line" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="font-medium text-ink">{o.name}</p>
+                  <form action={deleteShortlistOption.bind(null, request.id, o.id)}>
+                    <button type="submit" className="shrink-0 text-sm text-muted hover:text-danger">
+                      Remove
+                    </button>
+                  </form>
+                </div>
                 <p className="text-sm text-ink-soft">{o.price !== null ? formatMoney(o.price) : "No price logged"}</p>
                 {o.notes && <p className="mt-1 text-sm text-ink-soft">{o.notes}</p>}
-                {o.photoUrl && <p className="mt-1 truncate text-xs text-muted">{o.photoUrl}</p>}
               </div>
-              <form action={deleteShortlistOption.bind(null, request.id, o.id)}>
-                <button type="submit" className="text-sm text-muted hover:text-danger">
-                  Remove
-                </button>
-              </form>
             </li>
           ))}
           {request.shortlistOptions.length === 0 && (
@@ -228,7 +235,7 @@ export default async function RequestDetailPage({
           )}
         </ul>
 
-        <form action={addShortlistOption.bind(null, request.id)} className="mt-5 grid grid-cols-1 gap-3 border-t border-line pt-5 sm:grid-cols-2">
+        <form action={addShortlistOption.bind(null, request.id)} className="mt-6 grid grid-cols-1 gap-3 border-t border-line pt-6 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="so-partnerId">Link to a partner (optional)</label>
             <select id="so-partnerId" name="partnerId" className="field-input">
@@ -255,12 +262,12 @@ export default async function RequestDetailPage({
             <input id="so-photoUrl" name="photoUrl" type="url" placeholder="https://..." className="field-input" />
           </div>
           <div className="sm:col-span-2">
-            <button type="submit" className="btn-primary">Add to shortlist</button>
+            <button type="submit" className="btn-secondary">Add to shortlist</button>
           </div>
         </form>
 
         {request.shortlistOptions.length > 0 && (
-          <form action={markShortlistReady.bind(null, request.id)} className="mt-5 border-t border-line pt-5">
+          <form action={markShortlistReady.bind(null, request.id)} className="mt-6 border-t border-line pt-6">
             <button type="submit" className="btn-primary">
               Mark ready &amp; notify customer
             </button>
@@ -271,8 +278,8 @@ export default async function RequestDetailPage({
         )}
       </section>
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">Final outcome</h2>
+      <section className="card mt-8">
+        <h2 className="font-serif text-h2 text-ink">Final outcome</h2>
         <p className="mt-1 text-sm text-muted">
           Your own record for monthly partner invoicing — {Math.round(commissionRate * 100)}% commission on this
           vertical.
@@ -282,7 +289,7 @@ export default async function RequestDetailPage({
           <p className="mt-3 text-sm text-ink-soft">Last saved {formatDateTime(request.closedAt)}</p>
         )}
 
-        <form action={logOutcome.bind(null, request.id)} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <form action={logOutcome.bind(null, request.id)} className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="fo-finalPartnerId">Booked with (existing partner)</label>
             <select
@@ -343,8 +350,8 @@ export default async function RequestDetailPage({
 function Detail({ label, value, wide }: { label: string; value: string; wide?: boolean }) {
   return (
     <div className={wide ? "col-span-2 sm:col-span-3" : undefined}>
-      <dt className="text-xs uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="mt-0.5 text-ink">{value}</dd>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-1 text-ink">{value}</dd>
     </div>
   );
 }

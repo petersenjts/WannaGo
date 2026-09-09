@@ -34,20 +34,20 @@ export default async function PartnerDetailPage({
         ← All partners
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-muted">
+          <p className="eyebrow">
             {partner.vertical === "HOTEL" ? "Hotel" : "Restaurant"}
           </p>
-          <h1 className="mt-1 font-serif text-3xl text-ink">{partner.name}</h1>
+          <h1 className="mt-2 font-serif text-h1 text-ink">{partner.name}</h1>
           <p className="mt-1 text-ink-soft">{partner.city}</p>
         </div>
         <TrialBadge trialStartDate={partner.trialStartDate} />
       </div>
 
-      <section className="mt-8 max-w-2xl rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">Details</h2>
-        <form action={updatePartner.bind(null, partner.id)} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section className="card mt-10 max-w-2xl">
+        <h2 className="font-serif text-h2 text-ink">Details</h2>
+        <form action={updatePartner.bind(null, partner.id)} className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="field-label" htmlFor="name">Name</label>
             <input id="name" name="name" type="text" defaultValue={partner.name} required className="field-input [--accent:var(--color-ink)]" />
@@ -81,9 +81,9 @@ export default async function PartnerDetailPage({
         </form>
       </section>
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
+      <section className="card mt-8">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-serif text-xl text-ink">Bookings</h2>
+          <h2 className="font-serif text-h2 text-ink">Bookings</h2>
           <p className="text-sm text-ink-soft">
             {partner.bookedRequests.length} booking{partner.bookedRequests.length === 1 ? "" : "s"} · est. commission{" "}
             {formatMoney(totalCommission)}
@@ -107,8 +107,8 @@ export default async function PartnerDetailPage({
         </ul>
       </section>
 
-      <section className="mt-8 rounded-xl border border-line bg-card p-6">
-        <h2 className="font-serif text-xl text-ink">Contact history</h2>
+      <section className="card mt-8">
+        <h2 className="font-serif text-h2 text-ink">Contact history</h2>
         <ul className="mt-4 divide-y divide-line">
           {partner.contactedFor.map((c) => (
             <li key={c.id} className="py-3">

@@ -62,19 +62,19 @@ export default async function RequestsPage({
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <h1 className="font-serif text-3xl text-ink">Requests</h1>
+        <h1 className="font-serif text-h1 text-ink">Requests</h1>
         <p className="text-sm text-muted">
           {filtered.length} of {requests.length}
         </p>
       </div>
 
-      <form className="mt-6 flex flex-wrap gap-3" method="get">
-        <select name="vertical" defaultValue={vertical ?? ""} className="field-input w-auto">
+      <form className="mt-8 flex flex-wrap gap-3" method="get">
+        <select name="vertical" defaultValue={vertical ?? ""} className="field-input w-auto [--accent:var(--color-ink)]">
           <option value="">All verticals</option>
           <option value="STAY">Wannago (stays)</option>
           <option value="DINE">Wanna Eats (dining)</option>
         </select>
-        <select name="status" defaultValue={status ?? ""} className="field-input w-auto">
+        <select name="status" defaultValue={status ?? ""} className="field-input w-auto [--accent:var(--color-ink)]">
           <option value="">All statuses</option>
           {REQUEST_STATUSES.map((s) => (
             <option key={s} value={s}>
@@ -82,12 +82,12 @@ export default async function RequestsPage({
             </option>
           ))}
         </select>
-        <select name="cross" defaultValue={cross ?? ""} className="field-input w-auto">
+        <select name="cross" defaultValue={cross ?? ""} className="field-input w-auto [--accent:var(--color-ink)]">
           <option value="">Any customer</option>
           <option value="single">Hasn&apos;t tried the other side</option>
           <option value="both">Uses both verticals</option>
         </select>
-        <button type="submit" className="btn-primary [--accent:var(--color-ink)]">
+        <button type="submit" className="btn-primary">
           Filter
         </button>
         {(vertical || status || cross) && (
@@ -97,30 +97,30 @@ export default async function RequestsPage({
         )}
       </form>
 
-      <div className="mt-8 overflow-x-auto rounded-xl border border-line bg-card">
+      <div className="mt-10 overflow-x-auto rounded-2xl bg-card">
         <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
+          <thead className="eyebrow">
             <tr>
-              <th className="px-4 py-3 font-medium">Received</th>
-              <th className="px-4 py-3 font-medium">Vertical</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">City</th>
-              <th className="px-4 py-3 font-medium">Details</th>
-              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-5 py-4 font-medium">Received</th>
+              <th className="px-5 py-4 font-medium">Vertical</th>
+              <th className="px-5 py-4 font-medium">Customer</th>
+              <th className="px-5 py-4 font-medium">City</th>
+              <th className="px-5 py-4 font-medium">Details</th>
+              <th className="px-5 py-4 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.id} className="border-b border-line last:border-0 hover:bg-paper-alt/50">
-                <td className="px-4 py-3 align-top">
+              <tr key={r.id} className="even:bg-paper-alt/40 hover:bg-paper-alt">
+                <td className="px-5 py-4 align-top">
                   <Link href={`/admin/requests/${r.id}`} className="block text-ink-soft hover:text-ink">
                     {formatDate(r.createdAt)}
                   </Link>
                 </td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-5 py-4 align-top">
                   <VerticalBadge vertical={r.vertical} />
                 </td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-5 py-4 align-top">
                   <Link href={`/admin/requests/${r.id}`} className="font-medium text-ink hover:underline">
                     {r.customer.name}
                   </Link>
@@ -130,16 +130,16 @@ export default async function RequestsPage({
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 align-top text-ink-soft">{r.city}</td>
-                <td className="px-4 py-3 align-top text-ink-soft">{keyDetail(r)}</td>
-                <td className="px-4 py-3 align-top">
+                <td className="px-5 py-4 align-top text-ink-soft">{r.city}</td>
+                <td className="px-5 py-4 align-top text-ink-soft">{keyDetail(r)}</td>
+                <td className="px-5 py-4 align-top">
                   <StatusBadge status={r.status} />
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-muted">
+                <td colSpan={6} className="px-5 py-12 text-center text-muted">
                   No requests match these filters.
                 </td>
               </tr>
