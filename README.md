@@ -2,30 +2,36 @@
 
 A tool for running a manual, boutique travel-and-dining concierge business:
 consumers submit a request (a stay or a table), you review it, contact
-partners by hand, and log the outcome. No matching engine, no partner portal,
-no payments — just the record-keeping and pipeline you need to run this well,
-built around one goal: **tracking customers across both verticals**, since
-that's what makes the unit economics work.
+partners by hand, build a shortlist, and the customer picks one through their
+own portal. No matching engine, no *partner*-facing portal, no payments —
+just the record-keeping and pipeline you need to run this well, built around
+one goal: **tracking customers across both verticals**, since that's what
+makes the unit economics work.
 
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript) — one codebase for the public
-  request forms and the admin dashboard.
+  request forms, the admin dashboard, and the customer portal.
 - **PostgreSQL + Prisma 7** (via `@prisma/adapter-pg`) — a real, persistent
   database.
 - **Tailwind CSS 4** for styling.
-- **Auth**: a single admin login (email/password in environment variables),
-  no roles or multi-user support — that's deliberate, this is for one
-  operator.
+- **Resend** for transactional email (magic-link sign-in, "your options are
+  ready" notifications).
+- **Auth**: two independent, cookie-based sessions —
+  - **Admin**: a single login (email/password in environment variables), no
+    roles or multi-user support — deliberate, this is for one operator.
+  - **Customer portal**: passwordless magic-link by email, matched against
+    the same `Customer` records the admin side already uses.
 
 ## Project layout
 
 ```
 prisma/schema.prisma       — the data model (start here to understand the app)
-src/lib/                   — db client, auth, customer-matching, formatting
+src/lib/                   — db client, auth (admin + portal), email,
+                               customer-matching, formatting
 src/actions/                — server actions (the app's "backend" — one file
                                per area: public request submission, admin
-                               auth, admin requests, admin partners)
+                               auth/requests/partners, portal auth/requests)
 src/app/                   — pages
   /                        — landing page (choose Wannago or Wanna Eats)
   /stay, /eats             — public request forms
@@ -33,6 +39,9 @@ src/app/                   — pages
   /admin/requests          — request pipeline (list + detail)
   /admin/customers         — customers, matched across both verticals
   /admin/partners          — lightweight partner CRM
+  /portal/login            — customer sign-in (magic link by email)
+  /portal                  — customer's requests, plain-language status
+  /portal/requests/[id]    — shortlist view + "select this one"
 ```
 
 Everything reads from and writes to the single `Request` table (with
@@ -62,7 +71,22 @@ Fill in:
 - `DATABASE_URL` — the Postgres connection string from step 1.
 - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — whatever you want to log into `/admin`
   with.
-- `SESSION_SECRET` — a random string (`openssl rand -base64 32`).
+- `SESSION_SECRET` — a random string (`openssl rand -base64 32`). Signs both
+  the admin session and customer magic links.
+- `APP_URL` — `http://localhost:3000` for local dev; your real domain in
+  production. Used to build the links inside emails.
+- `RESEND_API_KEY` / `EMAIL_FROM` — for sending real email. **You can leave
+  these unset locally** — with no API key, magic links are logged to the
+  server console instead of emailed, so you can test the whole portal flow
+  without a Resend account. To send real email:
+  1. Sign up at [resend.com](https://resend.com) (free tier: 3,000
+     emails/month).
+  2. Add your sending domain and verify it — Resend gives you DNS records to
+     add. If your domain is registered through Railway, that's the same
+     "Domains" screen where you'd add a record, under the domain's own
+     **Add record** action.
+  3. Create an API key, set `RESEND_API_KEY` to it and `EMAIL_FROM` to
+     something like `"Wannago Concierge <hello@yourdomain.com>"`.
 
 ### 3. Install and set up the database
 
@@ -107,7 +131,10 @@ project.
    `${{Postgres.DATABASE_URL}}` (Railway's variable-reference syntax), so it
    stays in sync if the database ever moves.
 4. In the app service's **Variables**, set `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-   and `SESSION_SECRET` (a real random value — don't reuse the local one).
+   `SESSION_SECRET` (a real random value — don't reuse the local one),
+   `APP_URL` (your production domain), and `RESEND_API_KEY`/`EMAIL_FROM`
+   once you've verified a sending domain with Resend (see local setup above
+   — same steps, just done once and used everywhere).
 5. Deploy. Then run the migration **once** against the production database —
    easiest from your machine with the Railway CLI:
    ```bash
@@ -138,13 +165,21 @@ a build/ops tool, not something the running app needs).
 - **In progress** → you're contacting partners (log each one under "Partners
   contacted" on the request page — this is your own record, not synced from
   anywhere).
-- **Sent to customer** → you've sent your shortlist (hotels) or
-  recommendation (dining) — log what you sent under "Shortlist sent to the
-  customer".
+- **Sent to customer** → build the shortlist (hotels) or recommendation
+  (dining) under "Shortlist sent to the customer", then click **Mark ready &
+  notify customer** — that flips the status and emails the customer a
+  sign-in link to view it in their portal.
+- **Selected — book it** → the customer picked one in their portal. You'll
+  see a purple banner on the request naming their pick — go finalize that
+  booking with the partner. If they call to change their mind, use **Clear
+  selection** on that banner to reopen the shortlist for them.
 - **Booked** / **Closed / lost** → the final state. Log who it was booked
   with and the confirmed price under "Final outcome" — this is what you'll
   total up for monthly partner invoicing (12% hotels, 10% dining, after each
   partner's first 3 months free, shown automatically on the partner page).
+
+Customers never see these internal labels — the portal shows its own
+plain-language status (`src/lib/portal-status.ts`) instead.
 
 The **Customers** tab and the "hasn't tried the other side" filter on
 **Requests** are there specifically to surface who's only used one vertical —

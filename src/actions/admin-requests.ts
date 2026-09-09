@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import type { RequestStatus } from "@prisma/client";
+import { createMagicLinkToken } from "@/lib/portal-auth";
+import { sendPortalEmail } from "@/lib/email";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -48,6 +50,7 @@ export async function addShortlistOption(requestId: string, formData: FormData) 
   await requireAdmin();
   const partnerId = str(formData, "partnerId") || null;
   const name = str(formData, "name");
+  const photoUrl = str(formData, "photoUrl") || null;
   const price = optionalNumber(formData, "price");
   const notes = str(formData, "notes") || null;
   if (!name) return;
@@ -55,7 +58,7 @@ export async function addShortlistOption(requestId: string, formData: FormData) 
   const count = await db.shortlistOption.count({ where: { requestId } });
 
   await db.shortlistOption.create({
-    data: { requestId, partnerId, name, price, notes, sortOrder: count },
+    data: { requestId, partnerId, name, photoUrl, price, notes, sortOrder: count },
   });
   revalidatePath(`/admin/requests/${requestId}`);
 }
@@ -64,6 +67,47 @@ export async function deleteShortlistOption(requestId: string, optionId: string)
   await requireAdmin();
   await db.shortlistOption.delete({ where: { id: optionId } });
   revalidatePath(`/admin/requests/${requestId}`);
+}
+
+export async function markShortlistReady(requestId: string): Promise<void> {
+  await requireAdmin();
+
+  const request = await db.request.findUnique({
+    where: { id: requestId },
+    include: { customer: true, shortlistOptions: true },
+  });
+  if (!request || request.shortlistOptions.length === 0) return;
+
+  await db.request.update({ where: { id: requestId }, data: { status: "SENT_TO_CUSTOMER" } });
+
+  if (request.customer.email) {
+    const appUrl = process.env.APP_URL;
+    if (!appUrl) throw new Error("APP_URL environment variable is not set");
+    const token = await createMagicLinkToken(request.customer.email);
+    const link = `${appUrl}/portal/verify?token=${token}`;
+
+    await sendPortalEmail({
+      to: request.customer.email,
+      subject: request.vertical === "STAY" ? "Your stay options are ready" : "Your dining recommendation is ready",
+      heading: "Your options are ready",
+      body: "Take a look and let us know which one you'd like.",
+      ctaLabel: "View your options",
+      ctaUrl: link,
+    });
+  }
+
+  revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath("/admin/requests");
+}
+
+export async function clearSelection(requestId: string): Promise<void> {
+  await requireAdmin();
+  await db.request.update({
+    where: { id: requestId },
+    data: { selectedOptionId: null, selectedAt: null, status: "SENT_TO_CUSTOMER" },
+  });
+  revalidatePath(`/admin/requests/${requestId}`);
+  revalidatePath("/admin/requests");
 }
 
 export async function logOutcome(requestId: string, formData: FormData) {

@@ -20,6 +20,7 @@ const STATUS_STYLES: Record<RequestStatus, string> = {
   NEW: "bg-paper-alt text-ink-soft",
   IN_PROGRESS: "bg-amber-100 text-amber-800",
   SENT_TO_CUSTOMER: "bg-sky-100 text-sky-800",
+  SELECTED: "bg-violet-100 text-violet-800",
   BOOKED: "bg-emerald-100 text-emerald-800",
   CLOSED_LOST: "bg-stone-200 text-stone-600",
 };

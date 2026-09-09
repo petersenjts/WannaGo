@@ -15,6 +15,7 @@ enum RequestStatus {
   NEW
   IN_PROGRESS
   SENT_TO_CUSTOMER
+  SELECTED // customer picked an option from the shortlist, concierge needs to book it
   BOOKED
   CLOSED_LOST
 }
@@ -53,7 +54,12 @@ model Request {
   stayDetails      StayDetails?
   diningDetails    DiningDetails?
   partnerContacts  PartnerContact[]
-  shortlistOptions ShortlistOption[]
+  shortlistOptions ShortlistOption[] @relation("RequestOptions")
+
+  // The customer's pick from the shortlist, set by their own portal action.
+  selectedOptionId String?          @unique
+  selectedOption   ShortlistOption? @relation("SelectedOption", fields: [selectedOptionId], references: [id])
+  selectedAt       DateTime?
 
   // Final outcome, logged by the concierge for monthly partner invoicing.
   finalPartnerId             String?
@@ -118,16 +124,19 @@ model PartnerContact {
 model ShortlistOption {
   id        String  @id @default(cuid())
   requestId String
-  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request   Request @relation("RequestOptions", fields: [requestId], references: [id], onDelete: Cascade)
 
   partnerId String?
   partner   Partner? @relation(fields: [partnerId], references: [id])
 
   name      String
+  photoUrl  String?
   price     Decimal? @db.Decimal(10, 2)
   notes     String?
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  selectedForRequest Request? @relation("SelectedOption")
 }
 
 // Lightweight partner CRM. Commission rate is derived from vertical

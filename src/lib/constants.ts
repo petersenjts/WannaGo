@@ -17,6 +17,7 @@ export const REQUEST_STATUSES: RequestStatus[] = [
   "NEW",
   "IN_PROGRESS",
   "SENT_TO_CUSTOMER",
+  "SELECTED",
   "BOOKED",
   "CLOSED_LOST",
 ];
@@ -25,6 +26,7 @@ export const STATUS_LABELS: Record<RequestStatus, string> = {
   NEW: "New",
   IN_PROGRESS: "In progress",
   SENT_TO_CUSTOMER: "Sent to customer",
+  SELECTED: "Selected — book it",
   BOOKED: "Booked",
   CLOSED_LOST: "Closed / lost",
 };

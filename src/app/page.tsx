@@ -56,7 +56,11 @@ export default function Home() {
         </Link>
       </div>
 
-      <footer className="mt-16 text-sm text-muted">
+      <footer className="mt-16 flex gap-4 text-sm text-muted">
+        <Link href="/portal/login" className="hover:text-ink-soft">
+          Track your request
+        </Link>
+        <span aria-hidden>·</span>
         <Link href="/admin" className="hover:text-ink-soft">
           Concierge login
         </Link>

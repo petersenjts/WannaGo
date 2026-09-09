@@ -10,6 +10,8 @@ import {
   deletePartnerContact,
   addShortlistOption,
   deleteShortlistOption,
+  markShortlistReady,
+  clearSelection,
   logOutcome,
 } from "@/actions/admin-requests";
 
@@ -28,6 +30,7 @@ export default async function RequestDetailPage({
       diningDetails: true,
       partnerContacts: { include: { partner: true }, orderBy: { createdAt: "desc" } },
       shortlistOptions: { include: { partner: true }, orderBy: { sortOrder: "asc" } },
+      selectedOption: true,
       finalPartner: true,
     },
   });
@@ -90,6 +93,20 @@ export default async function RequestDetailPage({
             </span>
           ))}
         </p>
+      )}
+
+      {request.selectedOption && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm">
+          <p className="text-violet-900">
+            Customer selected <span className="font-medium">{request.selectedOption.name}</span>
+            {request.selectedAt && ` on ${formatDate(request.selectedAt)}`} — go finalize this booking.
+          </p>
+          <form action={clearSelection.bind(null, request.id)}>
+            <button type="submit" className="text-violet-700 underline hover:text-violet-900">
+              Clear selection
+            </button>
+          </form>
+        </div>
       )}
 
       <section className="mt-8 rounded-xl border border-line bg-card p-6">
@@ -197,6 +214,7 @@ export default async function RequestDetailPage({
                 <p className="font-medium text-ink">{o.name}</p>
                 <p className="text-sm text-ink-soft">{o.price !== null ? formatMoney(o.price) : "No price logged"}</p>
                 {o.notes && <p className="mt-1 text-sm text-ink-soft">{o.notes}</p>}
+                {o.photoUrl && <p className="mt-1 truncate text-xs text-muted">{o.photoUrl}</p>}
               </div>
               <form action={deleteShortlistOption.bind(null, request.id, o.id)}>
                 <button type="submit" className="text-sm text-muted hover:text-danger">
@@ -233,9 +251,24 @@ export default async function RequestDetailPage({
             <input id="so-notes" name="notes" type="text" className="field-input" />
           </div>
           <div className="sm:col-span-2">
+            <label className="field-label" htmlFor="so-photoUrl">Photo URL (optional)</label>
+            <input id="so-photoUrl" name="photoUrl" type="url" placeholder="https://..." className="field-input" />
+          </div>
+          <div className="sm:col-span-2">
             <button type="submit" className="btn-primary">Add to shortlist</button>
           </div>
         </form>
+
+        {request.shortlistOptions.length > 0 && (
+          <form action={markShortlistReady.bind(null, request.id)} className="mt-5 border-t border-line pt-5">
+            <button type="submit" className="btn-primary">
+              Mark ready &amp; notify customer
+            </button>
+            <p className="mt-2 text-xs text-muted">
+              Emails the customer a link to view and select from the options above.
+            </p>
+          </form>
+        )}
       </section>
 
       <section className="mt-8 rounded-xl border border-line bg-card p-6">
