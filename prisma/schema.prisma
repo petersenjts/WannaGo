@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Vertical {
+  STAY
+  DINE
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  SENT_TO_CUSTOMER
+  BOOKED
+  CLOSED_LOST
+}
+
+enum PartnerVertical {
+  HOTEL
+  RESTAURANT
+}
+
+// A person, identified across both verticals by normalized email/phone.
+// This is the join point that makes cross-vertical tracking possible.
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?  @unique
+  phone     String?  @unique
+  createdAt DateTime @default(now())
+
+  requests Request[]
+
+  @@index([email])
+  @@index([phone])
+}
+
+model Request {
+  id         String        @id @default(cuid())
+  vertical   Vertical
+  customerId String
+  customer   Customer      @relation(fields: [customerId], references: [id])
+  city       String
+  status     RequestStatus @default(NEW)
+
+  // free text from the consumer at submission time
+  consumerNotes String?
+
+  stayDetails      StayDetails?
+  diningDetails    DiningDetails?
+  partnerContacts  PartnerContact[]
+  shortlistOptions ShortlistOption[]
+
+  // Final outcome, logged by the concierge for monthly partner invoicing.
+  finalPartnerId             String?
+  finalPartner                Partner? @relation(fields: [finalPartnerId], references: [id])
+  finalPartnerNameIfUnlisted String?
+  finalPrice                  Decimal? @db.Decimal(10, 2)
+  outcomeNotes                String?
+  closedAt                    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vertical])
+  @@index([status])
+  @@index([customerId])
+}
+
+model StayDetails {
+  id        String   @id @default(cuid())
+  requestId String   @unique
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  checkIn        DateTime
+  checkOut       DateTime
+  guests         Int
+  budgetPerNight Decimal  @db.Decimal(10, 2)
+  preferenceTags String[] @default([])
+}
+
+model DiningDetails {
+  id        String  @id @default(cuid())
+  requestId String  @unique
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  date            DateTime
+  time            String
+  partySize       Int
+  budgetPerPerson Decimal  @db.Decimal(10, 2)
+  occasion        String?
+  cuisine         String?
+  dietaryNeeds    String?
+}
+
+// A log entry of a partner the concierge reached out to for a given request,
+// and what they quoted. Several per request is normal.
+model PartnerContact {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  partnerId             String?
+  partner               Partner? @relation(fields: [partnerId], references: [id])
+  partnerNameIfUnlisted String?
+
+  quote     Decimal? @db.Decimal(10, 2)
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+// The curated shortlist sent back to the consumer (~5 for hotels, effectively
+// 1 recommendation for dining).
+model ShortlistOption {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  partnerId String?
+  partner   Partner? @relation(fields: [partnerId], references: [id])
+
+  name      String
+  price     Decimal? @db.Decimal(10, 2)
+  notes     String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// Lightweight partner CRM. Commission rate is derived from vertical
+// (12% hotel / 10% restaurant), not stored per-partner.
+model Partner {
+  id             String          @id @default(cuid())
+  name           String
+  vertical       PartnerVertical
+  city           String
+  contactInfo    String?
+  trialStartDate DateTime        @default(now())
+  notes          String?
+  createdAt      DateTime        @default(now())
+
+  contactedFor   PartnerContact[]
+  shortlistedIn  ShortlistOption[]
+  bookedRequests Request[]
+
+  @@index([vertical])
+}

@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+:root {
+  /* Neutral base, shared by both verticals */
+  --color-paper: #faf6f0;
+  --color-paper-alt: #f2ebdf;
+  --color-card: #fffdfa;
+  --color-ink: #2a231c;
+  --color-ink-soft: #5c5346;
+  --color-muted: #8c8172;
+  --color-line: #e4d9c6;
+
+  /* Wannago (stays) — terracotta */
+  --color-stay: #b1502f;
+  --color-stay-strong: #8a3a1f;
+  --color-stay-soft: #f3ddd0;
+  --color-stay-soft-line: #e6c1ab;
+
+  /* Wanna Eats (dining) — deep olive */
+  --color-dine: #566b3a;
+  --color-dine-strong: #3d4d28;
+  --color-dine-soft: #dfe6cf;
+  --color-dine-soft-line: #c1cfa5;
+
+  --color-danger: #a3402f;
+}
+
+@theme inline {
+  --color-paper: var(--color-paper);
+  --color-paper-alt: var(--color-paper-alt);
+  --color-card: var(--color-card);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-muted: var(--color-muted);
+  --color-line: var(--color-line);
+
+  --color-stay: var(--color-stay);
+  --color-stay-strong: var(--color-stay-strong);
+  --color-stay-soft: var(--color-stay-soft);
+  --color-stay-soft-line: var(--color-stay-soft-line);
+
+  --color-dine: var(--color-dine);
+  --color-dine-strong: var(--color-dine-strong);
+  --color-dine-soft: var(--color-dine-soft);
+  --color-dine-soft-line: var(--color-dine-soft-line);
+
+  --color-danger: var(--color-danger);
+
+  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: var(--color-stay-soft);
+}
+
+/* Shared form primitives. Vertical-specific pages set --accent on a wrapper
+   (e.g. className="[--accent:var(--color-stay)]") so one set of styles works
+   for both Wannago and Wanna Eats forms. */
+@layer components {
+  .field-label {
+    @apply mb-1.5 block text-sm font-medium text-ink-soft;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-line bg-card px-3.5 py-2.5 text-ink outline-none transition-colors placeholder:text-muted;
+    accent-color: var(--accent, var(--color-stay));
+  }
+  .field-input:focus {
+    border-color: var(--accent, var(--color-stay));
+    box-shadow: 0 0 0 1px var(--accent, var(--color-stay));
+  }
+  .field-hint {
+    @apply mt-1 text-xs text-muted;
+  }
+  .btn-primary {
+    background: var(--accent, var(--color-stay));
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .tag-chip {
+    @apply cursor-pointer select-none rounded-full border border-line bg-card px-3.5 py-1.5 text-sm text-ink-soft transition-colors;
+  }
+  .tag-chip:has(input:checked) {
+    border-color: var(--accent, var(--color-stay));
+    background: color-mix(in srgb, var(--accent, var(--color-stay)) 12%, var(--color-card));
+    color: var(--color-ink);
+  }
+}
