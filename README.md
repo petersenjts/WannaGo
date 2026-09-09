@@ -17,6 +17,9 @@ makes the unit economics work.
 - **Tailwind CSS 4** for styling.
 - **Resend** for transactional email (magic-link sign-in, "your options are
   ready" notifications).
+- **Cloudinary** for shortlist option photos — the app runs in a Docker
+  container whose filesystem doesn't persist between deploys, so uploads
+  can't be saved to local disk; they go to Cloudinary instead.
 - **Auth**: two independent, cookie-based sessions —
   - **Admin**: a single login (email/password in environment variables), no
     roles or multi-user support — deliberate, this is for one operator.
@@ -87,6 +90,12 @@ Fill in:
      **Add record** action.
   3. Create an API key, set `RESEND_API_KEY` to it and `EMAIL_FROM` to
      something like `"Wannago Concierge <hello@yourdomain.com>"`.
+- `CLOUDINARY_URL` — for the shortlist photo upload field. **You can leave
+  this unset locally too** — pasting a photo URL still works without it;
+  only the "upload a file" option needs it. Sign up free at
+  [cloudinary.com](https://cloudinary.com), and on your dashboard home
+  you'll see an "API Environment variable" already in the right
+  `cloudinary://key:secret@cloud_name` format — copy it straight in.
 
 ### 3. Install and set up the database
 
@@ -132,9 +141,9 @@ project.
    stays in sync if the database ever moves.
 4. In the app service's **Variables**, set `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
    `SESSION_SECRET` (a real random value — don't reuse the local one),
-   `APP_URL` (your production domain), and `RESEND_API_KEY`/`EMAIL_FROM`
-   once you've verified a sending domain with Resend (see local setup above
-   — same steps, just done once and used everywhere).
+   `APP_URL` (your production domain), `RESEND_API_KEY`/`EMAIL_FROM`, and
+   `CLOUDINARY_URL` — same steps as local setup above, just done once and
+   used everywhere.
 5. Deploy. Then run the migration **once** against the production database —
    easiest from your machine with the Railway CLI:
    ```bash
@@ -170,7 +179,7 @@ a build/ops tool, not something the running app needs).
   notify customer** — that flips the status and emails the customer a
   sign-in link to view it in their portal.
 - **Selected — book it** → the customer picked one in their portal. You'll
-  see a purple banner on the request naming their pick — go finalize that
+  see a highlighted banner on the request naming their pick — go finalize that
   booking with the partner. If they call to change their mind, use **Clear
   selection** on that banner to reopen the shortlist for them.
 - **Booked** / **Closed / lost** → the final state. Log who it was booked

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { VerticalBadge, StatusBadge } from "@/components/badges";
 import { StatusSelect } from "@/components/status-select";
+import { OptionPhoto } from "@/components/option-photo";
 import { commissionRateFor } from "@/lib/partners";
 import {
   addPartnerContact,
@@ -210,12 +211,11 @@ export default async function RequestDetailPage({
         <ul className="mt-5 space-y-3">
           {request.shortlistOptions.map((o) => (
             <li key={o.id} className="flex items-start gap-4 rounded-xl bg-paper-alt/60 p-4">
-              {o.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={o.photoUrl} alt={o.name} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
-              ) : (
-                <div className="h-16 w-16 shrink-0 rounded-lg bg-line" />
-              )}
+              <OptionPhoto
+                src={o.photoUrl}
+                alt={o.name}
+                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-medium text-ink">{o.name}</p>
@@ -257,8 +257,19 @@ export default async function RequestDetailPage({
             <label className="field-label" htmlFor="so-notes">Notes</label>
             <input id="so-notes" name="notes" type="text" className="field-input" />
           </div>
-          <div className="sm:col-span-2">
-            <label className="field-label" htmlFor="so-photoUrl">Photo URL (optional)</label>
+          <div>
+            <label className="field-label" htmlFor="so-photo">Photo</label>
+            <input
+              id="so-photo"
+              name="photo"
+              type="file"
+              accept="image/*"
+              className="field-input file:mr-3 file:rounded-md file:border-0 file:bg-paper-alt file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink"
+            />
+            <p className="field-hint">JPG or PNG, up to 5MB.</p>
+          </div>
+          <div>
+            <label className="field-label" htmlFor="so-photoUrl">Or paste a photo URL instead</label>
             <input id="so-photoUrl" name="photoUrl" type="url" placeholder="https://..." className="field-input" />
           </div>
           <div className="sm:col-span-2">

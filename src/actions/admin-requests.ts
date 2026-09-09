@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { RequestStatus } from "@prisma/client";
 import { createMagicLinkToken } from "@/lib/portal-auth";
 import { sendPortalEmail } from "@/lib/email";
+import { uploadShortlistPhoto, MAX_PHOTO_BYTES } from "@/lib/cloudinary";
 
 function str(formData: FormData, key: string): string {
   return String(formData.get(key) ?? "").trim();
@@ -50,10 +51,23 @@ export async function addShortlistOption(requestId: string, formData: FormData) 
   await requireAdmin();
   const partnerId = str(formData, "partnerId") || null;
   const name = str(formData, "name");
-  const photoUrl = str(formData, "photoUrl") || null;
   const price = optionalNumber(formData, "price");
   const notes = str(formData, "notes") || null;
   if (!name) return;
+
+  // An uploaded file takes precedence over a pasted URL when both are given.
+  let photoUrl = str(formData, "photoUrl") || null;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    if (!photo.type.startsWith("image/")) {
+      console.error(`Rejected shortlist photo: not an image (${photo.type})`);
+    } else if (photo.size > MAX_PHOTO_BYTES) {
+      console.error(`Rejected shortlist photo: too large (${photo.size} bytes)`);
+    } else {
+      const buffer = Buffer.from(await photo.arrayBuffer());
+      photoUrl = await uploadShortlistPhoto(buffer);
+    }
+  }
 
   const count = await db.shortlistOption.count({ where: { requestId } });
 

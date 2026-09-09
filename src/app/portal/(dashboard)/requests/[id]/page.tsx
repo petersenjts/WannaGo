@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { formatDate, formatMoney } from "@/lib/format";
 import { customerStatusLabel } from "@/lib/portal-status";
 import { SelectOptionButton } from "@/components/select-option-button";
+import { OptionPhoto } from "@/components/option-photo";
 
 export default async function PortalRequestDetailPage({
   params,
@@ -67,10 +68,7 @@ export default async function PortalRequestDetailPage({
           <ul className="mt-6 space-y-6">
             {request.shortlistOptions.map((o) => (
               <li key={o.id} className="overflow-hidden rounded-3xl bg-card">
-                {o.photoUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={o.photoUrl} alt={o.name} className="h-64 w-full object-cover sm:h-72" />
-                )}
+                <OptionPhoto src={o.photoUrl} alt={o.name} className="h-64 w-full object-cover sm:h-72" />
                 <div className="p-6 sm:p-8">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <h2 className="font-serif text-h3 text-ink">{o.name}</h2>
@@ -91,14 +89,11 @@ export default async function PortalRequestDetailPage({
 
       {request.status === "SELECTED" && request.selectedOption && (
         <div className="mt-10 overflow-hidden rounded-3xl bg-card">
-          {request.selectedOption.photoUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={request.selectedOption.photoUrl}
-              alt={request.selectedOption.name}
-              className="h-64 w-full object-cover sm:h-72"
-            />
-          )}
+          <OptionPhoto
+            src={request.selectedOption.photoUrl}
+            alt={request.selectedOption.name}
+            className="h-64 w-full object-cover sm:h-72"
+          />
           <div className="p-6 sm:p-8">
             <p className="eyebrow">Your pick</p>
             <h2 className="mt-2 font-serif text-h3 text-ink">{request.selectedOption.name}</h2>
