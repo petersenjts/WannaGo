@@ -50,7 +50,15 @@ export default function Home() {
         </Link>
       </div>
 
-      <footer className="mt-20 flex gap-5 text-sm text-muted">
+      <p className="mt-10 text-center text-ink-soft sm:mt-14">
+        Not ready to ask yet?{" "}
+        <Link href="/explore" className="font-medium text-ink hover:underline">
+          Explore what we&apos;d recommend
+        </Link>
+        .
+      </p>
+
+      <footer className="mt-16 flex gap-5 text-sm text-muted">
         <Link href="/portal/login" className="hover:text-ink-soft">
           Track your request
         </Link>

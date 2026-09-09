@@ -6,6 +6,8 @@ import { VerticalBadge, StatusBadge } from "@/components/badges";
 import { StatusSelect } from "@/components/status-select";
 import { OptionPhoto } from "@/components/option-photo";
 import { commissionRateFor } from "@/lib/partners";
+import { getExploreSignal } from "@/lib/explore";
+import { priceLevelLabel } from "@/lib/price-level";
 import {
   addPartnerContact,
   deletePartnerContact,
@@ -38,7 +40,7 @@ export default async function RequestDetailPage({
 
   if (!request) notFound();
 
-  const [otherRequests, partners] = await Promise.all([
+  const [otherRequests, partners, exploreSignal] = await Promise.all([
     db.request.findMany({
       where: { customerId: request.customerId, NOT: { id: request.id } },
       orderBy: { createdAt: "desc" },
@@ -47,6 +49,7 @@ export default async function RequestDetailPage({
       where: { vertical: request.vertical === "STAY" ? "HOTEL" : "RESTAURANT" },
       orderBy: { name: "asc" },
     }),
+    getExploreSignal(request.customerId, request.vertical),
   ]);
 
   const accent = request.vertical === "STAY" ? "var(--color-stay)" : "var(--color-dine)";
@@ -94,6 +97,23 @@ export default async function RequestDetailPage({
             </span>
           ))}
         </p>
+      )}
+
+      {exploreSignal && (
+        <div className="mt-5 rounded-xl bg-paper-alt px-5 py-3.5 text-sm text-ink-soft">
+          <span className="font-medium text-ink">Liked on Explore: </span>
+          {exploreSignal.likedListingNames.join(", ")}
+          {exploreSignal.tags.length > 0 && <> — {exploreSignal.tags.join(", ")}</>}
+          {exploreSignal.priceLevelMin !== null && (
+            <>
+              {" "}
+              ·{" "}
+              {exploreSignal.priceLevelMin === exploreSignal.priceLevelMax
+                ? priceLevelLabel(exploreSignal.priceLevelMin)
+                : `${priceLevelLabel(exploreSignal.priceLevelMin)}-${priceLevelLabel(exploreSignal.priceLevelMax!)}`}
+            </>
+          )}
+        </div>
       )}
 
       {request.selectedOption && (

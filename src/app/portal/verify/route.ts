@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyMagicLinkToken, setPortalSessionCookie } from "@/lib/portal-auth";
+import { db } from "@/lib/db";
+import { linkExploreVisitorToCustomer } from "@/lib/explore";
 
 // Redirects are built from APP_URL, not the incoming request's own URL —
 // behind Railway's reverse proxy, request.url reflects the container's
@@ -20,5 +22,9 @@ export async function GET(request: NextRequest) {
   }
 
   await setPortalSessionCookie(email);
+
+  const customer = await db.customer.findFirst({ where: { email } });
+  if (customer) await linkExploreVisitorToCustomer(customer.id);
+
   return NextResponse.redirect(`${appUrl()}/portal`);
 }

@@ -34,7 +34,8 @@ model Customer {
   phone     String?  @unique
   createdAt DateTime @default(now())
 
-  requests Request[]
+  requests        Request[]
+  exploreVisitors ExploreVisitor[]
 
   @@index([email])
   @@index([phone])
@@ -137,6 +138,65 @@ model ShortlistOption {
   createdAt DateTime @default(now())
 
   selectedForRequest Request? @relation("SelectedOption")
+}
+
+// A curated catalog listing shown in the public Explore swipe deck / grid.
+// Distinct from Partner (CRM/invoicing) — a listing doesn't need to be an
+// onboarded partner, it's just something worth showing off.
+model ExploreListing {
+  id           String   @id @default(cuid())
+  vertical     Vertical
+  name         String
+  description  String?
+  neighborhood String?
+  priceLevel   Int // 1-4, shown as €/€€/€€€/€€€€
+  tags         String[] @default([]) // free text, no fixed vocabulary
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  photos ExploreListingPhoto[]
+  swipes ExploreSwipe[]
+
+  @@index([vertical, active])
+}
+
+model ExploreListingPhoto {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   ExploreListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+}
+
+// An anonymous browser identity for Explore swiping. The id *is* the cookie
+// value directly (a crypto.randomUUID() set by proxy.ts) — not an auth
+// mechanism, just a preference-tracking handle. Created lazily on first
+// swipe. customerId is intentionally not unique: the same person can
+// accumulate more than one visitor row across devices before any of them
+// gets linked.
+model ExploreVisitor {
+  id         String    @id
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  swipes ExploreSwipe[]
+
+  @@index([customerId])
+}
+
+model ExploreSwipe {
+  id        String         @id @default(cuid())
+  visitorId String
+  visitor   ExploreVisitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   ExploreListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  liked     Boolean
+  createdAt DateTime       @default(now())
+
+  @@unique([visitorId, listingId])
 }
 
 // Lightweight partner CRM. Commission rate is derived from vertical

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { linkExploreVisitorToCustomer } from "@/lib/explore";
 
 export function normalizeEmail(email: string | null | undefined): string | null {
   const trimmed = email?.trim().toLowerCase();
@@ -40,13 +41,17 @@ export async function findOrCreateCustomer(input: {
     if (email && !existing.email) updates.email = email;
     if (phone && !existing.phone) updates.phone = phone;
 
+    await linkExploreVisitorToCustomer(existing.id);
+
     if (Object.keys(updates).length > 0) {
       return db.customer.update({ where: { id: existing.id }, data: updates });
     }
     return existing;
   }
 
-  return db.customer.create({
+  const customer = await db.customer.create({
     data: { name: input.name, email, phone },
   });
+  await linkExploreVisitorToCustomer(customer.id);
+  return customer;
 }
