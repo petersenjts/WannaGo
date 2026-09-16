@@ -155,10 +155,23 @@ model ExploreListing {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Google Places enrichment (optional — a listing can be fully manual).
+  // googlePlaceId is exempt from Google's caching restrictions and can be
+  // stored indefinitely; it's what "refresh from Google" looks up again.
+  // Not @unique: a hard constraint would throw a confusing Prisma error if
+  // the same real place ever got linked to two listings.
+  googlePlaceId          String?
+  googleFormattedAddress String?
+  googleRating           Float?
+  googleReviewCount      Int?
+  cuisine                String? // DINE only; derived from Google's primaryTypeDisplayName
+  googleLastSyncedAt     DateTime?
+
   photos ExploreListingPhoto[]
   swipes ExploreSwipe[]
 
   @@index([vertical, active])
+  @@index([googlePlaceId])
 }
 
 model ExploreListingPhoto {

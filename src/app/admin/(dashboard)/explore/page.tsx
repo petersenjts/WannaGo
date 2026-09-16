@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { priceLevelLabel } from "@/lib/price-level";
 import { createListing } from "@/actions/explore-admin";
+import { GooglePlaceSearch } from "@/components/admin/google-place-search";
 
 export default async function ExploreAdminPage({
   searchParams,
@@ -97,6 +98,15 @@ export default async function ExploreAdminPage({
               <option value="DINE">Wanna Eats (restaurant)</option>
             </select>
           </div>
+          <GooglePlaceSearch
+            defaultQuery=""
+            neighborhoodInputId="e-neighborhood"
+            priceRadioGroupName="priceLevel"
+            vertical={null}
+            verticalSelectId="e-vertical"
+            initial={null}
+          />
+
           <div>
             <label className="field-label" htmlFor="e-neighborhood">Neighborhood / area</label>
             <input

@@ -18,6 +18,39 @@ function parseTags(raw: string): string[] {
     .filter(Boolean);
 }
 
+function optionalStr(formData: FormData, key: string): string | null {
+  return str(formData, key) || null;
+}
+
+function optionalFloat(formData: FormData, key: string): number | null {
+  const raw = str(formData, key);
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+function optionalInt(formData: FormData, key: string): number | null {
+  const raw = str(formData, key);
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) ? n : null;
+}
+
+/**
+ * Reads the optional Google Places fields a listing form may submit (hidden
+ * inputs populated by <GooglePlaceSearch>, absent entirely if an admin never
+ * touched the search step — nothing here blocks a save when they're absent).
+ */
+function googleFields(formData: FormData) {
+  return {
+    googlePlaceId: optionalStr(formData, "googlePlaceId"),
+    googleFormattedAddress: optionalStr(formData, "googleFormattedAddress"),
+    googleRating: optionalFloat(formData, "googleRating"),
+    googleReviewCount: optionalInt(formData, "googleReviewCount"),
+    cuisine: optionalStr(formData, "cuisine"),
+  };
+}
+
 async function uploadPhotos(formData: FormData, listingId: string): Promise<void> {
   const files = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) return;
@@ -53,6 +86,8 @@ export async function createListing(formData: FormData): Promise<void> {
   if (!name || (vertical !== "STAY" && vertical !== "DINE")) return;
   if (!Number.isInteger(priceLevel) || priceLevel < 1 || priceLevel > 4) return;
 
+  const google = googleFields(formData);
+
   const listing = await db.exploreListing.create({
     data: {
       name,
@@ -61,6 +96,8 @@ export async function createListing(formData: FormData): Promise<void> {
       description,
       neighborhood,
       tags,
+      ...google,
+      googleLastSyncedAt: google.googlePlaceId ? new Date() : null,
     },
   });
 
@@ -82,9 +119,27 @@ export async function updateListing(listingId: string, formData: FormData): Prom
   if (!name) return;
   if (!Number.isInteger(priceLevel) || priceLevel < 1 || priceLevel > 4) return;
 
+  const google = googleFields(formData);
+  // Only re-stamp the sync time when the Google link is actually new/changed
+  // in this submission — a routine edit that just resubmits the same
+  // already-linked place shouldn't make "last synced" look freshly refreshed.
+  const existing = await db.exploreListing.findUnique({
+    where: { id: listingId },
+    select: { googlePlaceId: true },
+  });
+  const isNewOrChangedLink = google.googlePlaceId !== null && google.googlePlaceId !== existing?.googlePlaceId;
+
   await db.exploreListing.update({
     where: { id: listingId },
-    data: { name, priceLevel, description, neighborhood, tags },
+    data: {
+      name,
+      priceLevel,
+      description,
+      neighborhood,
+      tags,
+      ...google,
+      ...(isNewOrChangedLink ? { googleLastSyncedAt: new Date() } : {}),
+    },
   });
 
   await uploadPhotos(formData, listingId);

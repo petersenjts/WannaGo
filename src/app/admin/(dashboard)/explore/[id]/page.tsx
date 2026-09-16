@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { updateListing, toggleListingActive, deletePhoto, deleteListing } from "@/actions/explore-admin";
+import { refreshListingFromGoogle } from "@/actions/google-places";
+import { GooglePlaceSearch } from "@/components/admin/google-place-search";
 
 export default async function ExploreListingEditPage({
   params,
@@ -28,11 +30,25 @@ export default async function ExploreListingEditPage({
           <p className="eyebrow">{listing.vertical === "STAY" ? "Wannago" : "Wanna Eats"}</p>
           <h1 className="mt-2 font-serif text-h1 text-ink">{listing.name}</h1>
         </div>
-        <form action={toggleListingActive.bind(null, listing.id, !listing.active)}>
-          <button type="submit" className="btn-secondary">
-            {listing.active ? "Mark inactive" : "Mark active"}
-          </button>
-        </form>
+        <div className="flex flex-col items-end gap-2">
+          <form action={toggleListingActive.bind(null, listing.id, !listing.active)}>
+            <button type="submit" className="btn-secondary">
+              {listing.active ? "Mark inactive" : "Mark active"}
+            </button>
+          </form>
+          {listing.googlePlaceId && (
+            <form action={refreshListingFromGoogle.bind(null, listing.id)} className="flex flex-col items-end gap-1">
+              <button type="submit" className="text-xs text-muted hover:text-ink">
+                Refresh from Google
+              </button>
+              {listing.googleLastSyncedAt && (
+                <span className="text-xs text-muted">
+                  Last synced {listing.googleLastSyncedAt.toLocaleDateString()}
+                </span>
+              )}
+            </form>
+          )}
+        </div>
       </div>
 
       {listing.photos.length > 0 && (
@@ -64,6 +80,26 @@ export default async function ExploreListingEditPage({
             <label className="field-label" htmlFor="name">Name</label>
             <input id="name" name="name" type="text" defaultValue={listing.name} required className="field-input" />
           </div>
+          <GooglePlaceSearch
+            defaultQuery={listing.name}
+            neighborhoodInputId="neighborhood"
+            priceRadioGroupName="priceLevel"
+            vertical={listing.vertical}
+            initial={
+              listing.googlePlaceId
+                ? {
+                    placeId: listing.googlePlaceId,
+                    name: listing.name,
+                    formattedAddress: listing.googleFormattedAddress ?? "",
+                    rating: listing.googleRating,
+                    reviewCount: listing.googleReviewCount,
+                    cuisine: listing.cuisine,
+                    lastSyncedAt: listing.googleLastSyncedAt?.toISOString() ?? null,
+                  }
+                : null
+            }
+          />
+
           <div>
             <label className="field-label" htmlFor="neighborhood">Neighborhood / area</label>
             <input

@@ -21,18 +21,36 @@ export function ExploreGrid({ listings }: { listings: ListingWithPhotos[] }) {
           <div className="p-5">
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <h3 className="font-serif text-h3 text-ink">{listing.name}</h3>
-              <p className="text-sm text-ink-soft">{priceLevelLabel(listing.priceLevel)}</p>
+              <p className="text-sm text-ink-soft">
+                {priceLevelLabel(listing.priceLevel)}
+                {listing.googleRating !== null && (
+                  <>
+                    {" "}
+                    · ★ {listing.googleRating.toFixed(1)}
+                    {listing.googleReviewCount !== null && ` (${listing.googleReviewCount})`}
+                  </>
+                )}
+              </p>
             </div>
             {listing.neighborhood && <p className="mt-1 text-sm text-muted">{listing.neighborhood}</p>}
-            {listing.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {listing.tags.slice(0, 4).map((tag) => (
-                  <span key={tag} className="rounded-full bg-paper-alt px-2.5 py-0.5 text-xs text-ink-soft">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            {(() => {
+              const chips =
+                listing.vertical === "DINE" && listing.cuisine
+                  ? [listing.cuisine, ...listing.tags]
+                  : listing.tags;
+              return (
+                chips.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {chips.slice(0, 4).map((tag) => (
+                      <span key={tag} className="rounded-full bg-paper-alt px-2.5 py-0.5 text-xs text-ink-soft">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )
+              );
+            })()}
+            {listing.googlePlaceId && <p className="mt-3 text-xs text-muted">Google Maps</p>}
           </div>
         </div>
       ))}
