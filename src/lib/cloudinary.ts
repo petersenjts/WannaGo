@@ -1,5 +1,3 @@
-import { v2 as cloudinary } from "cloudinary";
-
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
 
 /**
@@ -7,11 +5,18 @@ export const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
  * (large phone photos shouldn't slow down the portal or Explore) and letting
  * Cloudinary pick the best format/quality for the viewer. Returns the
  * delivery URL to store on whatever record owns the photo.
+ *
+ * The `cloudinary` package validates CLOUDINARY_URL as soon as it's
+ * imported, so the import is deferred to here (inside the function) — a
+ * missing/malformed credential then only fails an actual upload attempt
+ * instead of crashing every page that imports this module.
  */
 export async function uploadImage(buffer: Buffer, folder: string): Promise<string> {
   if (!process.env.CLOUDINARY_URL) {
     throw new Error("CLOUDINARY_URL environment variable is not set");
   }
+
+  const { v2: cloudinary } = await import("cloudinary");
 
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
