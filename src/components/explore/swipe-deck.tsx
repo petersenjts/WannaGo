@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { recordSwipe } from "@/actions/explore";
 import { SwipeCard } from "./swipe-card";
 import type { ListingWithPhotos } from "./types";
@@ -12,6 +13,7 @@ const EXIT_DURATION_MS = 250;
 const STACK_SIZE = 3; // current card + this many preloaded behind it
 
 export function SwipeDeck({ listings }: { listings: ListingWithPhotos[] }) {
+  const router = useRouter();
   const [index, setIndex] = useState(0);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
@@ -78,15 +80,9 @@ export function SwipeDeck({ listings }: { listings: ListingWithPhotos[] }) {
       return;
     }
 
-    // Not a drag — a tap. Small movement, short press, cycle photos instead.
+    // Not a drag — a tap. Small movement, short press: open the detail page.
     if (Math.abs(dx) < TAP_MOVE_THRESHOLD_PX && duration < TAP_MAX_DURATION_MS && current) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const tappedRight = e.clientX - rect.left > rect.width / 2;
-      setPhotoIndex((p) => {
-        const count = current.photos.length || 1;
-        const next = tappedRight ? p + 1 : p - 1;
-        return (next + count) % count;
-      });
+      router.push(`/explore/${current.slug}`);
     }
   }
 

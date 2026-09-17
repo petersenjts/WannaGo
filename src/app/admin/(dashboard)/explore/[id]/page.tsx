@@ -72,6 +72,12 @@ export default async function ExploreListingEditPage({
 
       <section className="card mt-8 max-w-2xl">
         <h2 className="font-serif text-h2 text-ink">Details</h2>
+        <p className="field-hint mt-1">
+          Public page:{" "}
+          <a href={`/explore/${listing.slug}`} target="_blank" className="text-ink-soft hover:underline">
+            wanna-go.net/explore/{listing.slug}
+          </a>
+        </p>
         <form
           action={updateListing.bind(null, listing.id)}
           className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2"
@@ -136,6 +142,17 @@ export default async function ExploreListingEditPage({
               defaultValue={listing.description ?? ""}
               className="field-input"
             />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="field-label" htmlFor="longDescription">Long description</label>
+            <textarea
+              id="longDescription"
+              name="longDescription"
+              rows={12}
+              defaultValue={listing.longDescription ?? ""}
+              className="field-input"
+            />
+            <p className="field-hint">Shown on the listing&apos;s own page. Plain text — separate paragraphs with a blank line.</p>
           </div>
           <div className="sm:col-span-2">
             <label className="field-label" htmlFor="tags">Tags</label>

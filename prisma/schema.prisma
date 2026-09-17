@@ -144,11 +144,13 @@ model ShortlistOption {
 // Distinct from Partner (CRM/invoicing) — a listing doesn't need to be an
 // onboarded partner, it's just something worth showing off.
 model ExploreListing {
-  id           String   @id @default(cuid())
-  vertical     Vertical
-  name         String
-  description  String?
-  neighborhood String?
+  id              String   @id @default(cuid())
+  vertical        Vertical
+  name            String
+  slug            String   @unique // generated once at creation, stable even if name changes later
+  description     String?
+  longDescription String? // full write-up, shown with prominence on the listing's own page
+  neighborhood    String?
   priceLevel   Int // 1-4, shown as €/€€/€€€/€€€€
   tags         String[] @default([]) // free text, no fixed vocabulary
   active       Boolean  @default(true)

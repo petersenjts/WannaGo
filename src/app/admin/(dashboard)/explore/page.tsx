@@ -139,6 +139,17 @@ export default async function ExploreAdminPage({
             />
           </div>
           <div className="sm:col-span-2">
+            <label className="field-label" htmlFor="e-longDescription">Long description</label>
+            <textarea
+              id="e-longDescription"
+              name="longDescription"
+              rows={12}
+              placeholder="The full write-up — as many paragraphs as you like. Leave a blank line between paragraphs."
+              className="field-input [--accent:var(--color-ink)]"
+            />
+            <p className="field-hint">Shown on the listing&apos;s own page. Plain text — separate paragraphs with a blank line.</p>
+          </div>
+          <div className="sm:col-span-2">
             <label className="field-label" htmlFor="e-tags">Tags</label>
             <input
               id="e-tags"

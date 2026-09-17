@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { uploadExplorePhoto, MAX_PHOTO_BYTES } from "@/lib/cloudinary";
+import { slugify, uniqueExploreSlug } from "@/lib/slug";
 import type { Vertical } from "@prisma/client";
 
 function str(formData: FormData, key: string): string {
@@ -80,6 +81,7 @@ export async function createListing(formData: FormData): Promise<void> {
   const vertical = str(formData, "vertical");
   const priceLevel = Number(formData.get("priceLevel"));
   const description = str(formData, "description") || null;
+  const longDescription = str(formData, "longDescription") || null;
   const neighborhood = str(formData, "neighborhood") || null;
   const tags = parseTags(str(formData, "tags"));
 
@@ -87,13 +89,16 @@ export async function createListing(formData: FormData): Promise<void> {
   if (!Number.isInteger(priceLevel) || priceLevel < 1 || priceLevel > 4) return;
 
   const google = googleFields(formData);
+  const slug = await uniqueExploreSlug(slugify(name));
 
   const listing = await db.exploreListing.create({
     data: {
       name,
+      slug,
       vertical: vertical as Vertical,
       priceLevel,
       description,
+      longDescription,
       neighborhood,
       tags,
       ...google,
@@ -113,6 +118,7 @@ export async function updateListing(listingId: string, formData: FormData): Prom
   const name = str(formData, "name");
   const priceLevel = Number(formData.get("priceLevel"));
   const description = str(formData, "description") || null;
+  const longDescription = str(formData, "longDescription") || null;
   const neighborhood = str(formData, "neighborhood") || null;
   const tags = parseTags(str(formData, "tags"));
 
@@ -125,16 +131,21 @@ export async function updateListing(listingId: string, formData: FormData): Prom
   // already-linked place shouldn't make "last synced" look freshly refreshed.
   const existing = await db.exploreListing.findUnique({
     where: { id: listingId },
-    select: { googlePlaceId: true },
+    select: { googlePlaceId: true, slug: true },
   });
   const isNewOrChangedLink = google.googlePlaceId !== null && google.googlePlaceId !== existing?.googlePlaceId;
+  // Slugs are never regenerated on rename (stable shareable links) — this
+  // only fills one in if a row somehow still lacks one.
+  const slug = existing?.slug || (await uniqueExploreSlug(slugify(name)));
 
   await db.exploreListing.update({
     where: { id: listingId },
     data: {
       name,
+      slug,
       priceLevel,
       description,
+      longDescription,
       neighborhood,
       tags,
       ...google,
