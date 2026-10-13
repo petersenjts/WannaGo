@@ -40,8 +40,12 @@ export async function previewDiscoveryAction(formData: FormData): Promise<Previe
     const result = await previewDiscovery(params);
     return { ok: true, ...result };
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     console.error("Discovery preview failed:", err);
-    return { ok: false, error: "Couldn't reach Google — try again in a moment." };
+    // Preview doesn't write to DiscoveryRunLog (it's a deliberately
+    // cheap/no-DB-write dry run) — the real error can only be surfaced here,
+    // live, rather than also persisted for later viewing.
+    return { ok: false, error: message };
   }
 }
 
@@ -62,6 +66,9 @@ export async function runDiscoveryAction(formData: FormData): Promise<RunDiscove
     revalidatePath("/admin/explore");
     revalidatePath("/admin");
     if (!result.ok) {
+      if ("failed" in result) {
+        return { ok: false, error: result.failed.message };
+      }
       return { ok: false, error: BLOCKED_MESSAGES[result.blocked.reason] ?? "Blocked by a spend safeguard." };
     }
     return { ok: true, created: result.created, skipped: result.skipped, errors: result.errors };

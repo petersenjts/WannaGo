@@ -302,6 +302,12 @@ model DiscoveryRunLog {
   claudeOutputTokens Int                     @default(0)
   estimatedCostUsd   Decimal                 @default(0) @db.Decimal(10, 4)
   blockedReason      DiscoveryBlockedReason?
+  // Set when the run threw before completing (e.g. the Google Places call
+  // failed outright — bad key, API not enabled, a restricted key rejecting
+  // server-side calls). Distinct from blockedReason, which is a safeguard
+  // refusal, not a failure. Null for both a normal completed run and a
+  // blocked one.
+  errorMessage       String?
 
   @@index([startedAt])
   @@index([trigger, startedAt])

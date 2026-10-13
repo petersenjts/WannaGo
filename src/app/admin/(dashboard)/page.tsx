@@ -99,6 +99,13 @@ export default async function AdminDashboardPage() {
                       <span className="inline-flex items-center rounded-full bg-[#F3E6C6] px-2.5 py-0.5 text-xs font-medium text-[#7A5A1E]">
                         Blocked — {BLOCKED_LABELS[run.blockedReason] ?? run.blockedReason}
                       </span>
+                    ) : run.errorMessage ? (
+                      <>
+                        <span className="inline-flex items-center rounded-full bg-danger/10 px-2.5 py-0.5 text-xs font-medium text-danger">
+                          Failed
+                        </span>
+                        <p className="mt-1 max-w-xs text-xs text-muted">{run.errorMessage}</p>
+                      </>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-[#DCE3CE] px-2.5 py-0.5 text-xs font-medium text-dine-strong">
                         Completed

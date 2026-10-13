@@ -11,7 +11,12 @@ import type { DiscoveryBlockedReason, DiscoveryTrigger } from "@prisma/client";
 
 export type SafeguardedRunResult =
   | { ok: true; created: number; skipped: number; errors: { place: string; error: string }[] }
-  | { ok: false; blocked: { reason: DiscoveryBlockedReason } };
+  | { ok: false; blocked: { reason: DiscoveryBlockedReason } }
+  | { ok: false; failed: { message: string } };
+
+// Keeps a pathological error body (e.g. a large HTML error page) from
+// bloating the run log indefinitely.
+const MAX_ERROR_MESSAGE_LENGTH = 2000;
 
 function startOfDay(): Date {
   const d = new Date();
@@ -82,7 +87,27 @@ export async function runDiscoveryWithSafeguards(
   }
 
   const startedAt = new Date();
-  const result = await runDiscovery({ ...params, cap: effectiveCap });
+  let result: Awaited<ReturnType<typeof runDiscovery>>;
+  try {
+    result = await runDiscovery({ ...params, cap: effectiveCap });
+  } catch (err) {
+    // The search itself failed before any candidate could be processed
+    // (invalid key, API not enabled, a restricted key rejecting server-side
+    // calls, etc.) — logged here, with the real message, instead of only
+    // reaching console/Railway logs while the run log shows nothing.
+    const message = (err instanceof Error ? err.message : String(err)).slice(0, MAX_ERROR_MESSAGE_LENGTH);
+    await db.discoveryRunLog.create({
+      data: {
+        startedAt,
+        finishedAt: new Date(),
+        trigger,
+        area: params.area,
+        vertical: params.vertical,
+        errorMessage: message,
+      },
+    });
+    return { ok: false, failed: { message } };
+  }
 
   const estimatedCostUsd =
     result.googleCallCount * PLACE_DETAILS_ENTERPRISE_PRICE_USD +

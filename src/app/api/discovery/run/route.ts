@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
   try {
     const result = await runDiscoveryWithSafeguards({ area, vertical, minRating, minReviewCount, cap }, "CRON");
     if (!result.ok) {
+      if ("failed" in result) {
+        return NextResponse.json({ ok: false, error: result.failed.message }, { status: 502 });
+      }
       return NextResponse.json({ ok: false, blockedReason: result.blocked.reason });
     }
     return NextResponse.json(result);
