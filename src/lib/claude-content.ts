@@ -7,7 +7,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
 const MODEL = "claude-sonnet-5-5";
 const REQUEST_TIMEOUT_MS = 30000;
-const MAX_SOURCE_CHARS = 4000; // per source page, keeps input tokens predictable
+export const MAX_SOURCE_CHARS = 4000; // per source page, keeps input tokens predictable
 
 function apiKey(): string {
   const key = process.env.ANTHROPIC_API_KEY;
@@ -35,6 +35,13 @@ export type ListingContent = {
   uncertainClaims: string[];
 };
 
+export type ClaudeUsage = { inputTokens: number; outputTokens: number };
+
+export type GenerateListingContentResult = {
+  content: ListingContent;
+  usage: ClaudeUsage;
+};
+
 const SYSTEM_PROMPT = `You write short, editorial descriptions of hotels and restaurants for a curated travel-discovery catalog. This is a batch content-generation job, not a conversation — respond only with the requested structured output.
 
 Strict grounding rule: use ONLY facts present in the supplied sources (the Google Places data and the scraped website text below). Never invent dates, names, awards, chefs, owners, or history that are not explicitly present in the sources. If the sources contain no story or history, write about the place's character, location, and offering instead, and say nothing about its history.
@@ -44,8 +51,19 @@ Write:
 - A long description: 3-5 short paragraphs, warm and editorial in tone, no hype or marketing cliches, separated by blank lines. Include the place's story only where the sources actually support one.
 - A list of any claims in your output you are even slightly unsure are fully supported by the sources (can be empty).`;
 
-function buildUserMessage(input: ListingContentInput): string {
-  const facts = [
+/**
+ * Exported so claude-verification.ts can check claims against the exact
+ * same trusted facts block the generator saw — otherwise a legitimate
+ * claim drawn from Google data (price, rating, neighborhood) would be
+ * wrongly flagged unsupported, since it never appears in the website text.
+ */
+export function buildFactsBlock(
+  input: Pick<
+    ListingContentInput,
+    "name" | "vertical" | "formattedAddress" | "neighborhood" | "priceLevel" | "rating" | "reviewCount" | "cuisine"
+  >
+): string {
+  return [
     `Name: ${input.name}`,
     `Type: ${input.vertical === "STAY" ? "Hotel" : "Restaurant"}`,
     `Address: ${input.formattedAddress}`,
@@ -56,6 +74,10 @@ function buildUserMessage(input: ListingContentInput): string {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function buildUserMessage(input: ListingContentInput): string {
+  const facts = buildFactsBlock(input);
 
   const sources =
     input.sources.length > 0
@@ -67,7 +89,7 @@ function buildUserMessage(input: ListingContentInput): string {
   return `## Facts\n${facts}\n\n## Sources\n${sources}`;
 }
 
-export async function generateListingContent(input: ListingContentInput): Promise<ListingContent> {
+export async function generateListingContent(input: ListingContentInput): Promise<GenerateListingContentResult> {
   const res = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
@@ -106,6 +128,7 @@ export async function generateListingContent(input: ListingContentInput): Promis
 
   const data = (await res.json()) as {
     content?: { type: string; text?: string }[];
+    usage?: { input_tokens?: number; output_tokens?: number };
   };
   const textBlock = data.content?.find((b) => b.type === "text");
   if (!textBlock?.text) {
@@ -114,8 +137,14 @@ export async function generateListingContent(input: ListingContentInput): Promis
 
   const parsed = JSON.parse(textBlock.text) as ListingContent;
   return {
-    shortDescription: parsed.shortDescription ?? "",
-    longDescription: parsed.longDescription ?? "",
-    uncertainClaims: Array.isArray(parsed.uncertainClaims) ? parsed.uncertainClaims : [],
+    content: {
+      shortDescription: parsed.shortDescription ?? "",
+      longDescription: parsed.longDescription ?? "",
+      uncertainClaims: Array.isArray(parsed.uncertainClaims) ? parsed.uncertainClaims : [],
+    },
+    usage: {
+      inputTokens: data.usage?.input_tokens ?? 0,
+      outputTokens: data.usage?.output_tokens ?? 0,
+    },
   };
 }

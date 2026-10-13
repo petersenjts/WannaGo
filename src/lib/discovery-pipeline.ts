@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { searchPlaces, getPlaceDetails } from "@/lib/google-places";
 import { scrapeWebsite } from "@/lib/website-scraper";
-import { generateListingContent } from "@/lib/claude-content";
+import { generateListingContent, buildFactsBlock, MAX_SOURCE_CHARS } from "@/lib/claude-content";
+import { verifyClaims } from "@/lib/claude-verification";
 import { slugify, uniqueExploreSlug } from "@/lib/slug";
 import type { Vertical } from "@prisma/client";
 
@@ -9,11 +10,13 @@ import type { Vertical } from "@prisma/client";
 // which labels these as estimates. Confirm against Google's current pricing
 // page before relying on these for real budgeting:
 // https://developers.google.com/maps/billing-and-pricing/pricing
-const PLACE_DETAILS_ENTERPRISE_PRICE_USD = 0.02; // $20 / 1,000 calls, base volume tier
-const ASSUMED_INPUT_TOKENS = 2500;
-const ASSUMED_OUTPUT_TOKENS = 800;
-const CLAUDE_INPUT_PRICE_PER_MTOK = 2;
-const CLAUDE_OUTPUT_PRICE_PER_MTOK = 10;
+export const PLACE_DETAILS_ENTERPRISE_PRICE_USD = 0.02; // $20 / 1,000 calls, base volume tier
+// Two Claude calls per place now (generate + verify), both working from
+// roughly the same source material.
+const ASSUMED_INPUT_TOKENS = 4500;
+const ASSUMED_OUTPUT_TOKENS = 1100;
+export const CLAUDE_INPUT_PRICE_PER_MTOK = 2;
+export const CLAUDE_OUTPUT_PRICE_PER_MTOK = 10;
 
 export type DiscoveryParams = {
   area: string;
@@ -71,6 +74,9 @@ export type RunResult = {
   created: number;
   skipped: number;
   errors: { place: string; error: string }[];
+  googleCallCount: number;
+  claudeInputTokens: number;
+  claudeOutputTokens: number;
 };
 
 /**
@@ -88,6 +94,9 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
 
   let created = 0;
   let skipped = 0;
+  let googleCallCount = 0;
+  let claudeInputTokens = 0;
+  let claudeOutputTokens = 0;
   const errors: { place: string; error: string }[] = [];
 
   for (const candidate of surviving) {
@@ -95,6 +104,7 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
 
     try {
       const details = await getPlaceDetails(candidate.placeId);
+      googleCallCount++;
 
       if (
         (params.minRating !== null && (details.rating ?? 0) < params.minRating) ||
@@ -116,7 +126,7 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
         noWebsiteNote = "No official website was available — based on Google Places data only.";
       }
 
-      const content = await generateListingContent({
+      const listingFacts = {
         name: details.name,
         vertical: params.vertical,
         formattedAddress: details.formattedAddress,
@@ -125,8 +135,23 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
         rating: details.rating,
         reviewCount: details.reviewCount,
         cuisine: params.vertical === "DINE" ? details.primaryTypeLabel : null,
+      };
+
+      const { content, usage: contentUsage } = await generateListingContent({ ...listingFacts, sources });
+      claudeInputTokens += contentUsage.inputTokens;
+      claudeOutputTokens += contentUsage.outputTokens;
+
+      // Always verify — even a Google-only draft has the trusted facts
+      // block to check claims against, so this isn't skippable just
+      // because there were no scraped website sources this time.
+      const claimChecks = await verifyClaims({
+        shortDescription: content.shortDescription,
+        longDescription: content.longDescription,
+        facts: buildFactsBlock(listingFacts),
         sources,
       });
+      claudeInputTokens += claimChecks.usage.inputTokens;
+      claudeOutputTokens += claimChecks.usage.outputTokens;
 
       const uncertainClaims = noWebsiteNote ? [noWebsiteNote, ...content.uncertainClaims] : content.uncertainClaims;
 
@@ -152,6 +177,10 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
           googleLastSyncedAt: new Date(),
           aiSourceUrls: sources.map((s) => s.url),
           aiUncertainClaims: uncertainClaims,
+          aiSourceExcerpts: sources.map((s) => ({ url: s.url, text: s.text.slice(0, MAX_SOURCE_CHARS) })),
+          aiClaimChecks: claimChecks.claims,
+          aiOriginalDescription: content.shortDescription,
+          aiOriginalLongDescription: content.longDescription,
           aiGeneratedAt: new Date(),
         },
       });
@@ -161,5 +190,5 @@ export async function runDiscovery(params: DiscoveryParams & { cap: number }): P
     }
   }
 
-  return { created, skipped, errors };
+  return { created, skipped, errors, googleCallCount, claudeInputTokens, claudeOutputTokens };
 }

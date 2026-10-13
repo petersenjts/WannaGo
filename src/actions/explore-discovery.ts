@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { previewDiscovery, runDiscovery, type DiscoveryParams } from "@/lib/discovery-pipeline";
+import type { ClaimCheck } from "@/lib/claude-verification";
 import type { Vertical } from "@prisma/client";
 
 function parseParams(formData: FormData): DiscoveryParams {
@@ -60,11 +61,34 @@ export async function runDiscoveryAction(formData: FormData): Promise<RunDiscove
   }
 }
 
-export async function approveDraftListing(listingId: string): Promise<void> {
+export async function approveDraftListing(listingId: string, formData: FormData): Promise<void> {
   await requireAdmin();
+
+  const listing = await db.exploreListing.findUnique({ where: { id: listingId } });
+  if (!listing) return;
+
+  const claimChecks = Array.isArray(listing.aiClaimChecks) ? (listing.aiClaimChecks as unknown as ClaimCheck[]) : [];
+  const hasUnsupportedClaims = claimChecks.some((c) => !c.supported);
+  const textEdited =
+    listing.description !== listing.aiOriginalDescription ||
+    listing.longDescription !== listing.aiOriginalLongDescription;
+  const override = formData.get("override") === "on";
+
+  // Blocked — a draft with unsupported claims can't be approved until it's
+  // been edited (text no longer matches what was flagged) or the admin
+  // explicitly overrides. Client-side the button is already disabled for
+  // this case; this is defense-in-depth, so it silently no-ops rather than
+  // surfacing an error, matching this file's existing convention for
+  // invalid/blocked bound-form actions.
+  if (hasUnsupportedClaims && !textEdited && !override) return;
+
   await db.exploreListing.update({
     where: { id: listingId },
-    data: { reviewStatus: null, active: true },
+    data: {
+      reviewStatus: null,
+      active: true,
+      approvedWithOverride: hasUnsupportedClaims && !textEdited && override,
+    },
   });
   revalidatePath("/admin/explore");
   revalidatePath(`/admin/explore/${listingId}`);

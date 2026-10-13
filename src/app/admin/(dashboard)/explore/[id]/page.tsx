@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { updateListing, toggleListingActive, deletePhoto, deleteListing } from "@/actions/explore-admin";
 import { refreshListingFromGoogle } from "@/actions/google-places";
 import { GooglePlaceSearch } from "@/components/admin/google-place-search";
+import { DraftReviewPanel } from "@/components/admin/draft-review-panel";
+import type { ClaimCheck } from "@/lib/claude-verification";
 
 export default async function ExploreListingEditPage({
   params,
@@ -50,6 +52,22 @@ export default async function ExploreListingEditPage({
           )}
         </div>
       </div>
+
+      {listing.reviewStatus && (
+        <DraftReviewPanel
+          listingId={listing.id}
+          reviewStatus={listing.reviewStatus}
+          sourceUrls={listing.aiSourceUrls}
+          sourceExcerpts={(listing.aiSourceExcerpts as { url: string; text: string }[] | null) ?? []}
+          uncertainClaims={listing.aiUncertainClaims}
+          claimChecks={(listing.aiClaimChecks as unknown as ClaimCheck[] | null) ?? []}
+          textEdited={
+            listing.description !== listing.aiOriginalDescription ||
+            listing.longDescription !== listing.aiOriginalLongDescription
+          }
+          approvedWithOverride={listing.approvedWithOverride}
+        />
+      )}
 
       {listing.photos.length > 0 && (
         <section className="card mt-8">

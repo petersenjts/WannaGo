@@ -183,6 +183,17 @@ model ExploreListing {
   aiUncertainClaims String[]  @default([]) // claims the model flagged as unsure about
   aiGeneratedAt     DateTime?
 
+  // Claim verification (a second Claude call checking the generated text
+  // against aiSourceExcerpts) — gates Approve when it finds unsupported
+  // claims. aiOriginal* are snapshots taken once at generation time, never
+  // updated again, purely so an edit can be detected (current description
+  // differs from the snapshot) without a separate "edited" flag to maintain.
+  aiSourceExcerpts          Json? // [{url,text}] — the scraped text actually sent to Claude
+  aiClaimChecks             Json? // [{text,supported,note}] from verifyClaims; [] when no sources existed
+  aiOriginalDescription     String?
+  aiOriginalLongDescription String?
+  approvedWithOverride      Boolean @default(false)
+
   photos ExploreListingPhoto[]
   swipes ExploreSwipe[]
 
