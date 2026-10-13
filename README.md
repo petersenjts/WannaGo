@@ -57,11 +57,37 @@ mechanism behind cross-vertical tracking.
 
 ### 1. Get a Postgres database
 
-Any standard Postgres works. The free tiers on
-[Neon](https://neon.tech), [Railway](https://railway.app), or
-[Supabase](https://supabase.com) are all fine for development — Neon is the
-quickest to spin up (a couple of clicks, no credit card). Copy the connection
-string it gives you.
+Production runs on Neon. **Don't develop against the production database** —
+instead create a Neon **branch** off it for local dev, which gives you the
+same schema and realistic-shaped data without touching anything live:
+
+1. In the [Neon Console](https://console.neon.tech), open the project, then
+   **Branches → Create branch**. Branch from `production` (or whatever your
+   primary branch is named), give it a name like `dev`.
+2. Open the new branch and copy its **connection string** (Branches → your
+   new branch → Connection Details) — it's a different hostname from
+   production's, even though it started as a copy of it.
+3. Before using it day to day, check what came across: a branch copies all
+   rows that existed at branch time. Point Prisma Studio
+   (`npm run db:studio`) at the new branch's connection string and delete any
+   row under `Customer` (and its related `Request`s) that's a real person,
+   not test data — the dev branch should end up with test data only.
+4. Use *that* connection string as your local `DATABASE_URL` (step 2 below).
+   Never put the production connection string in your local `.env`.
+
+If you'd rather not depend on production at all, a completely fresh Neon
+project (or Railway/Supabase) also works for local dev — you'll just start
+from an empty schema and need to run every migration from scratch (step 3).
+
+**Keeping migrations separate:** there's one migration history, checked into
+`prisma/migrations/` — that doesn't change. What's separate is *applying* it:
+author and test new migrations against your dev branch first
+(`npx prisma migrate dev --name ...`, see "Extending this later" below), get
+the generated SQL reviewed/merged like any other code change, and only then
+run `npx prisma migrate deploy` against production (see "Deploying"). Never
+run `migrate dev` against production — it's an interactive, dev-only command
+that can prompt to reset data; `migrate deploy` is the deterministic,
+non-destructive one meant for that.
 
 ### 2. Configure environment variables
 
@@ -96,16 +122,38 @@ Fill in:
   [cloudinary.com](https://cloudinary.com), and on your dashboard home
   you'll see an "API Environment variable" already in the right
   `cloudinary://key:secret@cloud_name` format — copy it straight in.
+- `GOOGLE_PLACES_API_KEY` — for Explore listing enrichment (rating, address,
+  cuisine) and the AI discovery agent. From the
+  [Google Cloud Console](https://console.cloud.google.com), with Places API
+  (New) enabled on the project — requires an active billing account even to
+  stay within free usage. **You can leave this unset locally** — the
+  Explore admin's search/autofill degrades to manual entry, but the
+  discovery agent needs it and will fail without it.
+- `ANTHROPIC_API_KEY` — for the AI discovery agent (drafts listing
+  descriptions and checks their claims against sources). From
+  [console.anthropic.com](https://console.anthropic.com) → Settings → API
+  Keys. Only needed if you're using "Discover new listings" in
+  `/admin/explore` locally.
+
+The discovery agent's scheduled-run secret (used by `POST
+/api/discovery/run`) is **not** an environment variable — it's generated and
+rotated from `/admin/settings` after the app is running, and only its hash
+is stored in the database.
 
 ### 3. Install and set up the database
 
 ```bash
 npm install
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 ```
 
-`migrate dev` creates the tables from `prisma/schema.prisma`. Run it again
-(with a new `--name`) any time you change the schema.
+`migrate deploy` applies every migration already checked into
+`prisma/migrations/` in order — this is what you run against a fresh or
+newly-branched database to bring it up to the current schema. Once you're
+making your own schema changes, use `npx prisma migrate dev --name
+<description>` instead (see "Extending this later") — that's the
+interactive command that generates a *new* migration file from your edits
+to `prisma/schema.prisma`.
 
 ### 4. Run it
 
@@ -139,11 +187,25 @@ project.
    `DATABASE_URL` — reference it in your app service's variables as
    `${{Postgres.DATABASE_URL}}` (Railway's variable-reference syntax), so it
    stays in sync if the database ever moves.
-4. In the app service's **Variables**, set `ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-   `SESSION_SECRET` (a real random value — don't reuse the local one),
-   `APP_URL` (your production domain), `RESEND_API_KEY`/`EMAIL_FROM`, and
-   `CLOUDINARY_URL` — same steps as local setup above, just done once and
-   used everywhere.
+4. In the app service's **Variables**, set every variable below (same
+   sources as "Local setup" above, just done once in production and used
+   everywhere):
+
+   | Variable | Source |
+   |---|---|
+   | `DATABASE_URL` | Reference your Postgres plugin as `${{Postgres.DATABASE_URL}}` — or, if your database lives outside this Railway project (e.g. a Neon production branch), paste its connection string directly. **Never point this at your local dev branch.** |
+   | `ADMIN_EMAIL` | Your choice — the concierge login email. |
+   | `ADMIN_PASSWORD` | Your choice — set directly in Railway, a strong password. |
+   | `SESSION_SECRET` | A fresh `openssl rand -base64 32` — don't reuse your local `.env` value. |
+   | `APP_URL` | Your production domain (e.g. `https://wanna-go.net`) — builds absolute links in customer emails and magic-link redirects. |
+   | `RESEND_API_KEY` | [resend.com](https://resend.com), after verifying your sending domain. Must be set in production — without it, emails silently become console logs no customer ever sees. |
+   | `EMAIL_FROM` | Your verified sender, e.g. `Wannago Concierge <hello@yourdomain.com>`. |
+   | `CLOUDINARY_URL` | Cloudinary dashboard → Settings → API Keys — copy the ready-made "API Environment variable" string. |
+   | `GOOGLE_PLACES_API_KEY` | [Google Cloud Console](https://console.cloud.google.com), Places API (New) enabled, billing account attached. Required for Explore enrichment and the whole discovery agent. |
+   | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → Settings → API Keys. Required for the discovery agent to generate or verify any draft. |
+
+   The discovery agent's scheduled-run secret is not set here — generate it
+   from `/admin/settings` once the app is deployed and running.
 5. Deploy. Then run the migration **once** against the production database —
    easiest from your machine with the Railway CLI:
    ```bash
@@ -162,11 +224,12 @@ docker build -t wannago .
 docker run -p 3000:3000 --env-file .env wannago
 ```
 
-Same idea elsewhere: provision Postgres, set the four environment variables,
-deploy the Dockerfile, then run `npx prisma migrate deploy` once against that
-database from a machine that has the CLI and the production `DATABASE_URL`
-(the container image itself doesn't include the Prisma CLI, by design — it's
-a build/ops tool, not something the running app needs).
+Same idea elsewhere: provision Postgres, set the environment variables from
+the table above, deploy the Dockerfile, then run `npx prisma migrate deploy`
+once against that database from a machine that has the CLI and the
+production `DATABASE_URL` (the container image itself doesn't include the
+Prisma CLI, by design — it's a build/ops tool, not something the running app
+needs).
 
 ## How the pipeline maps to how you work
 
