@@ -278,7 +278,7 @@ model DiscoverySettings {
   monthlyPlaceLimit    Int       @default(500)
   maxCapPerRun         Int       @default(30)
   cronRateLimitPerHour Int       @default(2)
-  killSwitchEnabled    Boolean   @default(false)
+  killSwitchEnabled    Boolean   @default(true)
   cronSecretHash       String? // sha256 hex digest only — plaintext is never stored
   cronSecretUpdatedAt  DateTime?
   updatedAt            DateTime  @updatedAt
