@@ -1,4 +1,4 @@
-import type { RequestStatus, Vertical } from "@prisma/client";
+import type { ExploreListingReviewStatus, RequestStatus, Vertical } from "@prisma/client";
 import { STATUS_LABELS } from "@/lib/constants";
 import { isInTrial, trialEndDate } from "@/lib/partners";
 import { formatDate } from "@/lib/format";
@@ -47,6 +47,26 @@ export function TrialBadge({ trialStartDate }: { trialStartDate: Date }) {
   ) : (
     <span className="inline-flex items-center rounded-full bg-[#DCE3CE] px-2.5 py-0.5 text-xs font-medium text-dine-strong">
       Standard rate
+    </span>
+  );
+}
+
+const REVIEW_STATUS_STYLES: Record<ExploreListingReviewStatus, string> = {
+  PENDING_REVIEW: "bg-[#F3E6C6] text-[#7A5A1E]",
+  REJECTED: "bg-paper-alt text-muted",
+};
+
+const REVIEW_STATUS_LABELS: Record<ExploreListingReviewStatus, string> = {
+  PENDING_REVIEW: "Pending review",
+  REJECTED: "Rejected",
+};
+
+export function ReviewStatusBadge({ status }: { status: ExploreListingReviewStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${REVIEW_STATUS_STYLES[status]}`}
+    >
+      {REVIEW_STATUS_LABELS[status]}
     </span>
   );
 }

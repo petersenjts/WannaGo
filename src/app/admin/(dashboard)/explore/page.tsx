@@ -3,33 +3,58 @@ import { db } from "@/lib/db";
 import { priceLevelLabel } from "@/lib/price-level";
 import { createListing } from "@/actions/explore-admin";
 import { GooglePlaceSearch } from "@/components/admin/google-place-search";
+import { ReviewStatusBadge } from "@/components/badges";
 
 export default async function ExploreAdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ vertical?: string }>;
+  searchParams: Promise<{ vertical?: string; review?: string }>;
 }) {
-  const { vertical: verticalParam } = await searchParams;
+  const { vertical: verticalParam, review: reviewParam } = await searchParams;
   const vertical = verticalParam === "STAY" || verticalParam === "DINE" ? verticalParam : undefined;
+  const reviewStatus =
+    reviewParam === "pending" ? "PENDING_REVIEW" : reviewParam === "rejected" ? "REJECTED" : undefined;
 
-  const listings = await db.exploreListing.findMany({
-    where: vertical ? { vertical } : undefined,
-    include: { photos: { orderBy: { sortOrder: "asc" }, take: 1 } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [listings, pendingReviewCount] = await Promise.all([
+    db.exploreListing.findMany({
+      where: { ...(vertical ? { vertical } : {}), ...(reviewStatus ? { reviewStatus } : {}) },
+      include: { photos: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.exploreListing.count({ where: { reviewStatus: "PENDING_REVIEW" } }),
+  ]);
 
   return (
     <div>
-      <h1 className="font-serif text-h1 text-ink">Explore</h1>
-      <p className="mt-2 text-ink-soft">
-        The curated catalog people swipe or browse at wanna-go.net/explore.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-h1 text-ink">Explore</h1>
+          <p className="mt-2 text-ink-soft">
+            The curated catalog people swipe or browse at wanna-go.net/explore.
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Link href="/admin/explore/discover" className="btn-secondary [--accent:var(--color-ink)]">
+            Discover new listings
+          </Link>
+          {pendingReviewCount > 0 && (
+            <Link href="/admin/explore?review=pending" className="text-xs text-muted hover:text-ink">
+              {pendingReviewCount} pending review
+            </Link>
+          )}
+        </div>
+      </div>
 
-      <form className="mt-8 flex gap-3" method="get">
+      <form className="mt-8 flex flex-wrap gap-3" method="get">
         <select name="vertical" defaultValue={vertical ?? ""} className="field-input w-auto [--accent:var(--color-ink)]">
           <option value="">All verticals</option>
           <option value="STAY">Wannago (stays)</option>
           <option value="DINE">Wanna Eats (dining)</option>
+        </select>
+        <select name="review" defaultValue={reviewParam ?? ""} className="field-input w-auto [--accent:var(--color-ink)]">
+          <option value="">All listings</option>
+          <option value="pending">Pending review</option>
+          <option value="rejected">Rejected</option>
         </select>
         <button type="submit" className="btn-primary [--accent:var(--color-ink)]">
           Filter
@@ -37,7 +62,7 @@ export default async function ExploreAdminPage({
       </form>
 
       <div className="mt-10 overflow-x-auto rounded-2xl bg-card">
-        <table className="w-full min-w-[700px] text-left text-sm">
+        <table className="w-full min-w-[800px] text-left text-sm">
           <thead className="eyebrow">
             <tr>
               <th className="px-5 py-4 font-medium">Name</th>
@@ -46,6 +71,7 @@ export default async function ExploreAdminPage({
               <th className="px-5 py-4 font-medium">Price</th>
               <th className="px-5 py-4 font-medium">Photos</th>
               <th className="px-5 py-4 font-medium">Status</th>
+              <th className="px-5 py-4 font-medium">Review</th>
             </tr>
           </thead>
           <tbody>
@@ -71,11 +97,14 @@ export default async function ExploreAdminPage({
                     {l.active ? "Active" : "Inactive"}
                   </span>
                 </td>
+                <td className="px-5 py-4 align-top">
+                  {l.reviewStatus && <ReviewStatusBadge status={l.reviewStatus} />}
+                </td>
               </tr>
             ))}
             {listings.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-12 text-center text-muted">
+                <td colSpan={7} className="px-5 py-12 text-center text-muted">
                   No Explore listings yet.
                 </td>
               </tr>

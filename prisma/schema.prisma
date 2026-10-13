@@ -25,6 +25,11 @@ enum PartnerVertical {
   RESTAURANT
 }
 
+enum ExploreListingReviewStatus {
+  PENDING_REVIEW
+  REJECTED
+}
+
 // A person, identified across both verticals by normalized email/phone.
 // This is the join point that makes cross-vertical tracking possible.
 model Customer {
@@ -169,11 +174,21 @@ model ExploreListing {
   cuisine                String? // DINE only; derived from Google's primaryTypeDisplayName
   googleLastSyncedAt     DateTime?
 
+  // AI discovery draft review (optional — a listing can be fully manual).
+  // null for every manually-created or already-approved listing; only set
+  // while a draft is awaiting admin review or has been rejected. Orthogonal
+  // to `active` — approving a draft just clears this to null.
+  reviewStatus      ExploreListingReviewStatus?
+  aiSourceUrls      String[]  @default([]) // website URLs actually used as generation sources
+  aiUncertainClaims String[]  @default([]) // claims the model flagged as unsure about
+  aiGeneratedAt     DateTime?
+
   photos ExploreListingPhoto[]
   swipes ExploreSwipe[]
 
   @@index([vertical, active])
   @@index([googlePlaceId])
+  @@index([reviewStatus])
 }
 
 model ExploreListingPhoto {

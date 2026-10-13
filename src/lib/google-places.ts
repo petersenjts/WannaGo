@@ -31,6 +31,7 @@ export type GooglePlaceDetails = {
   rating: number | null;
   reviewCount: number | null;
   primaryTypeLabel: string | null;
+  websiteUri: string | null;
 };
 
 type GoogleDisplayName = { text?: string; languageCode?: string };
@@ -53,6 +54,7 @@ type GooglePlaceDetailsResponse = {
   userRatingCount?: number;
   primaryType?: string;
   primaryTypeDisplayName?: GoogleDisplayName;
+  websiteUri?: string;
 };
 
 /**
@@ -162,7 +164,7 @@ export async function getPlaceDetails(placeId: string): Promise<GooglePlaceDetai
   const res = await placesFetch(
     `${PLACES_API_BASE}/places/${encodeURIComponent(placeId)}`,
     { method: "GET" },
-    "id,displayName,formattedAddress,addressComponents,priceLevel,rating,userRatingCount,primaryType,primaryTypeDisplayName"
+    "id,displayName,formattedAddress,addressComponents,priceLevel,rating,userRatingCount,primaryType,primaryTypeDisplayName,websiteUri"
   );
   const data = (await res.json()) as GooglePlaceDetailsResponse;
   return {
@@ -174,5 +176,6 @@ export async function getPlaceDetails(placeId: string): Promise<GooglePlaceDetai
     rating: typeof data.rating === "number" ? data.rating : null,
     reviewCount: typeof data.userRatingCount === "number" ? data.userRatingCount : null,
     primaryTypeLabel: derivePrimaryTypeLabel(data.primaryType, data.primaryTypeDisplayName),
+    websiteUri: data.websiteUri ?? null,
   };
 }
