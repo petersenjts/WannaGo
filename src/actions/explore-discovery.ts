@@ -3,9 +3,16 @@
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { previewDiscovery, runDiscovery, type DiscoveryParams } from "@/lib/discovery-pipeline";
+import { previewDiscovery, type DiscoveryParams } from "@/lib/discovery-pipeline";
+import { runDiscoveryWithSafeguards } from "@/lib/discovery-safeguards";
 import type { ClaimCheck } from "@/lib/claude-verification";
 import type { Vertical } from "@prisma/client";
+
+const BLOCKED_MESSAGES: Record<string, string> = {
+  KILL_SWITCH: "Blocked — the kill switch is on. Turn it off in Settings to run discovery.",
+  DAILY_LIMIT: "Blocked — today's place limit has been reached. Adjust it in Settings if needed.",
+  MONTHLY_LIMIT: "Blocked — this month's place limit has been reached. Adjust it in Settings if needed.",
+};
 
 function parseParams(formData: FormData): DiscoveryParams {
   const area = String(formData.get("area") ?? "").trim();
@@ -48,12 +55,15 @@ export async function runDiscoveryAction(formData: FormData): Promise<RunDiscove
   if (!params.area) return { ok: false, error: "Enter an area to search." };
 
   const capRaw = Number(formData.get("cap"));
-  const cap = Number.isInteger(capRaw) && capRaw > 0 ? Math.min(capRaw, 30) : 10;
+  const cap = Number.isInteger(capRaw) && capRaw > 0 ? capRaw : 10;
 
   try {
-    const result = await runDiscovery({ ...params, cap });
+    const result = await runDiscoveryWithSafeguards({ ...params, cap }, "ADMIN");
     revalidatePath("/admin/explore");
     revalidatePath("/admin");
+    if (!result.ok) {
+      return { ok: false, error: BLOCKED_MESSAGES[result.blocked.reason] ?? "Blocked by a spend safeguard." };
+    }
     return { ok: true, created: result.created, skipped: result.skipped, errors: result.errors };
   } catch (err) {
     console.error("Discovery run failed:", err);

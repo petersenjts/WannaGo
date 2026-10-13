@@ -21,7 +21,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
   }
 
   await setSessionCookie();
-  redirect("/admin/requests");
+  redirect("/admin");
 }
 
 export async function logout(): Promise<void> {

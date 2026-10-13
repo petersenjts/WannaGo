@@ -30,6 +30,18 @@ enum ExploreListingReviewStatus {
   REJECTED
 }
 
+enum DiscoveryTrigger {
+  ADMIN
+  CRON
+}
+
+enum DiscoveryBlockedReason {
+  KILL_SWITCH
+  DAILY_LIMIT
+  MONTHLY_LIMIT
+  RATE_LIMIT
+}
+
 // A person, identified across both verticals by normalized email/phone.
 // This is the join point that makes cross-vertical tracking possible.
 model Customer {
@@ -238,6 +250,44 @@ model ExploreSwipe {
   createdAt DateTime       @default(now())
 
   @@unique([visitorId, listingId])
+}
+
+// Admin-editable spend controls for the AI discovery agent. Single row
+// (id is always "singleton"), read via a self-healing upsert so the row
+// materializes with defaults on first use — no seed migration needed.
+model DiscoverySettings {
+  id                   String    @id @default("singleton")
+  dailyPlaceLimit      Int       @default(50)
+  monthlyPlaceLimit    Int       @default(500)
+  maxCapPerRun         Int       @default(30)
+  cronRateLimitPerHour Int       @default(2)
+  killSwitchEnabled    Boolean   @default(false)
+  cronSecretHash       String? // sha256 hex digest only — plaintext is never stored
+  cronSecretUpdatedAt  DateTime?
+  updatedAt            DateTime  @updatedAt
+}
+
+// One row per discovery run attempt, including ones refused by a safeguard
+// (blockedReason set, zero places processed) — the admin dashboard's recent
+// runs list shows both so a quiet kill-switch/limit block is still visible.
+model DiscoveryRunLog {
+  id                 String                  @id @default(cuid())
+  startedAt          DateTime                @default(now())
+  finishedAt         DateTime?
+  trigger            DiscoveryTrigger
+  area               String
+  vertical           Vertical
+  placesCreated      Int                     @default(0)
+  placesSkipped      Int                     @default(0)
+  errorCount         Int                     @default(0)
+  googleCallCount    Int                     @default(0)
+  claudeInputTokens  Int                     @default(0)
+  claudeOutputTokens Int                     @default(0)
+  estimatedCostUsd   Decimal                 @default(0) @db.Decimal(10, 4)
+  blockedReason      DiscoveryBlockedReason?
+
+  @@index([startedAt])
+  @@index([trigger, startedAt])
 }
 
 // Lightweight partner CRM. Commission rate is derived from vertical
