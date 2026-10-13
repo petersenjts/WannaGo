@@ -32,6 +32,13 @@ export default async function ExploreListingDetailPage({
   if (!listing || !listing.active) notFound();
 
   const visitorId = await getExploreVisitorId();
+
+  try {
+    await db.exploreListingView.create({ data: { listingId: listing.id, visitorId } });
+  } catch (err) {
+    console.error("Failed to record explore listing view:", err);
+  }
+
   const existingSwipe = visitorId
     ? await db.exploreSwipe.findUnique({
         where: { visitorId_listingId: { visitorId, listingId: listing.id } },

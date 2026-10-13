@@ -208,6 +208,7 @@ model ExploreListing {
 
   photos ExploreListingPhoto[]
   swipes ExploreSwipe[]
+  views  ExploreListingView[]
 
   @@index([vertical, active])
   @@index([googlePlaceId])
@@ -250,6 +251,22 @@ model ExploreSwipe {
   createdAt DateTime       @default(now())
 
   @@unique([visitorId, listingId])
+}
+
+// A detail-page open, for funnel measurement. visitorId is a plain string,
+// not a relation to ExploreVisitor — that row is only created lazily on
+// first swipe, so a pure page view very often has no matching visitor row
+// yet; forcing a relation would mean either creating one on every view or
+// an unenforceable nullable FK. A plain string is enough for view counts.
+model ExploreListingView {
+  id        String         @id @default(cuid())
+  listingId String
+  listing   ExploreListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  visitorId String?
+  createdAt DateTime       @default(now())
+
+  @@index([listingId])
+  @@index([createdAt])
 }
 
 // Admin-editable spend controls for the AI discovery agent. Single row
